@@ -28,6 +28,7 @@ function formatDate(value) {
 export default function CustomerProfile() {
   const { customerId } = useParams();
   const navigate = useNavigate();
+  const [viewPhoto, setViewPhoto] = useState(null);
 
   const [record, setRecord] = useState(null);
 
@@ -189,6 +190,13 @@ export default function CustomerProfile() {
               <img
                 src={customerPhotoUrl}
                 alt={customer.name}
+                className="clickable-profile-photo"
+                onClick={() =>
+                  setViewPhoto({
+                    src: customerPhotoUrl,
+                    title: `${customer.name} - Customer Photo`,
+                  })
+                }
               />
             ) : (
               <span>
@@ -314,6 +322,13 @@ export default function CustomerProfile() {
               <img
                 src={jaminPhotoUrl}
                 alt={jamin.name}
+                className="clickable-profile-photo"
+                onClick={() =>
+                  setViewPhoto({
+                    src: jaminPhotoUrl,
+                    title: `${jamin.name} - Jamin Photo`,
+                  })
+                }
               />
             ) : (
               <span>
@@ -571,6 +586,38 @@ export default function CustomerProfile() {
         )}
 
       </div>
+
+      {/* PHOTO VIEWER */}
+      {viewPhoto && (
+        <div
+          className="photo-viewer-backdrop"
+          onClick={() => setViewPhoto(null)}
+        >
+          <div
+            className="photo-viewer"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="photo-viewer-header">
+              <h3>{viewPhoto.title}</h3>
+
+              <button
+                type="button"
+                className="photo-viewer-close"
+                onClick={() => setViewPhoto(null)}
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="photo-viewer-body">
+              <img
+                src={viewPhoto.src}
+                alt={viewPhoto.title}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
     </section>
   );
