@@ -3,12 +3,23 @@ import {
   useNavigate,
   useParams,
 } from "react-router";
+
 import {
   addLoanToCustomer,
   findCustomer,
   getNextLoanId,
   loadCustomers,
 } from "../utils/customerStorage";
+
+function getTodayDate() {
+  const now = new Date();
+  const offset = now.getTimezoneOffset();
+  const localDate = new Date(
+    now.getTime() - offset * 60 * 1000
+  );
+
+  return localDate.toISOString().split("T")[0];
+}
 
 export default function AddLoan() {
   const { customerId } = useParams();
@@ -24,46 +35,65 @@ export default function AddLoan() {
   const [cycle, setCycle] =
     useState("Weekly");
 
-  const [type, setType] =
-    useState("EMI");
+  const [loanDate, setLoanDate] =
+    useState(getTodayDate());
 
   const [amount, setAmount] =
     useState(10000);
 
-  const [rate, setRate] =
-    useState(2);
-
-  const [ioDuration, setIoDuration] =
+  const [period, setPeriod] =
     useState(10);
 
-  const interest = useMemo(
-    () => (amount * rate) / 100,
-    [amount, rate]
-  );
+  const [rate, setRate] =
+    useState(10);
 
-  const emiDuration = useMemo(() => {
-    if (cycle === "Daily") return 100;
-    if (cycle === "Weekly") return 10;
-    if (cycle === "Monthly") return 10;
+  const [
+    interestTakenUpfront,
+    setInterestTakenUpfront,
+  ] = useState(false);
 
-    return 10;
-  }, [cycle]);
+  const [showSuccess, setShowSuccess] =
+    useState(false);
 
-  const collection = useMemo(() => {
-    if (type === "IO") {
-      return interest;
+  // =========================================================
+  // CALCULATION
+  // =========================================================
+
+  const interestAmount = useMemo(() => {
+    return (amount * rate) / 100;
+  }, [amount, rate]);
+
+  const totalRepayment = useMemo(() => {
+    // If interest is already taken upfront,
+    // the customer only has to repay the principal amount.
+    if (interestTakenUpfront) {
+      return amount;
     }
 
-    return amount / emiDuration;
-  }, [
-    type,
-    interest,
-    amount,
-    emiDuration,
-  ]);
+    // If interest is NOT taken upfront,
+    // customer repays principal + interest through collections.
+    return amount + interestAmount;
+  }, [amount, interestAmount, interestTakenUpfront]);
 
-  const amountGiven =
-    amount - interest;
+  const collectionAmount = useMemo(() => {
+    if (!period || period <= 0) {
+      return 0;
+    }
+
+    return totalRepayment / period;
+  }, [totalRepayment, period]);
+
+  const amountGiven = useMemo(() => {
+    if (interestTakenUpfront) {
+      return amount - interestAmount;
+    }
+
+    return amount;
+  }, [
+    amount,
+    interestAmount,
+    interestTakenUpfront,
+  ]);
 
   const durationUnit =
     cycle === "Daily"
@@ -71,6 +101,17 @@ export default function AddLoan() {
       : cycle === "Weekly"
       ? "Weeks"
       : "Months";
+
+  const collectionLabel =
+    cycle === "Daily"
+      ? "Collection / Day"
+      : cycle === "Weekly"
+      ? "Collection / Week"
+      : "Collection / Month";
+
+  // =========================================================
+  // CUSTOMER NOT FOUND
+  // =========================================================
 
   if (!customerRecord) {
     return (
@@ -89,10 +130,28 @@ export default function AddLoan() {
     );
   }
 
+  // =========================================================
+  // SAVE LOAN
+  // =========================================================
+
   const handleSaveLoan = () => {
+    if (!loanDate) {
+      alert(
+        "Please select loan given date"
+      );
+      return;
+    }
+
     if (!amount || amount <= 0) {
       alert(
         "Please enter a valid loan amount"
+      );
+      return;
+    }
+
+    if (!period || period <= 0) {
+      alert(
+        "Please enter a valid period"
       );
       return;
     }
@@ -104,34 +163,66 @@ export default function AddLoan() {
       return;
     }
 
-    if (
-      type === "IO" &&
-      (!ioDuration || ioDuration <= 0)
-    ) {
+    if (amountGiven < 0) {
       alert(
-        "Please enter a valid IO duration"
+        "Interest amount cannot be greater than loan amount"
       );
       return;
     }
 
     const newLoan = {
       loanId,
+      loanDate,
+
       loanAmount: amount,
+
       cycle,
-      loanType: type,
+
+      // Keep EMI for compatibility with
+      // existing customer/profile screens.
+      loanType: "EMI",
+
       interestRate: rate,
-      interestAmount: interest,
+      interestAmount,
+
+      interestTakenUpfront,
+
       amountGiven,
-      duration:
-        type === "EMI"
-          ? emiDuration
-          : ioDuration,
+
+      duration: period,
       durationUnit,
-      collectionAmount: collection,
+
+      totalRepayment,
+      collectionAmount,
 
       status: "Active",
+
       collectedAmount: 0,
       principalPending: amount,
+
+      pendingDue: 0,
+      fineDue: 0,
+      finePaidTotal: 0,
+
+     paymentHistory: [
+  {
+    id: `BORROW-${Date.now()}`,
+
+    paymentType: "Loan Given",
+
+    direction: "Outgoing",
+
+    paymentDate: loanDate,
+
+    amount: amountGiven,
+
+    collectedBy: "Owner",
+
+    pendingAfter: null,
+
+    paidAt: new Date().toISOString(),
+  },
+],
 
       precloseAmount: null,
       preclosedAt: null,
@@ -148,13 +239,17 @@ export default function AddLoan() {
       );
 
     if (!updated) {
-      alert("Unable to add loan.");
+      alert(
+        "Unable to add loan."
+      );
       return;
     }
 
-    alert(
-      `New loan added successfully!\n\nLoan ID: ${loanId}`
-    );
+    setShowSuccess(true);
+  };
+
+  const handleSuccessDone = () => {
+    setShowSuccess(false);
 
     navigate(
       `/customers/profile/${customerId}`
@@ -162,176 +257,106 @@ export default function AddLoan() {
   };
 
   return (
-    <section className="panel add-customer-panel">
+    <>
+      <section className="panel add-customer-panel">
 
-      <div className="add-customer-header">
-        <h1>Add New Loan</h1>
+        {/* HEADER */}
 
-        <p>
-          Existing Customer:{" "}
-          <b>
-            {customerRecord.customer.name}
-          </b>{" "}
-          ({customerId})
-        </p>
-      </div>
+        <div className="add-customer-header">
+          <h1>Add New Loan</h1>
 
-      <div className="form-section-title">
-        Loan Details
-      </div>
-
-      <div className="customer-form">
-
-        <div className="form-field">
-          <label>Loan ID</label>
-
-          <input
-            value={loanId}
-            readOnly
-          />
+          <p>
+            Existing Customer:{" "}
+            <b>
+              {
+                customerRecord
+                  .customer
+                  .name
+              }
+            </b>{" "}
+            ({customerId})
+          </p>
         </div>
 
-        <div className="form-field">
-          <label>Loan Amount *</label>
-
-          <input
-            type="number"
-            min="1"
-            value={amount}
-            onChange={(e) =>
-              setAmount(
-                Number(e.target.value)
-              )
-            }
-          />
+        <div className="form-section-title">
+          Loan Details
         </div>
 
-        <div className="form-field">
-          <label>
-            Collection Cycle *
-          </label>
+        <div className="customer-form">
 
-          <div className="choices">
+          {/* LOAN ID */}
 
-            {[
-              "Daily",
-              "Weekly",
-              "Monthly",
-            ].map((x) => (
-              <button
-                type="button"
-                key={x}
-                className={
-                  cycle === x
-                    ? "active"
-                    : ""
-                }
-                onClick={() =>
-                  setCycle(x)
-                }
-              >
-                {x}
-              </button>
-            ))}
-
-          </div>
-        </div>
-
-        <div className="form-field">
-          <label>Loan Type *</label>
-
-          <div className="choices">
-
-            {["EMI", "IO"].map((x) => (
-              <button
-                type="button"
-                key={x}
-                className={
-                  type === x
-                    ? "active"
-                    : ""
-                }
-                onClick={() =>
-                  setType(x)
-                }
-              >
-                {x}
-              </button>
-            ))}
-
-          </div>
-        </div>
-
-        <div className="form-field">
-          <label>
-            Interest Rate % *
-          </label>
-
-          <input
-            type="number"
-            min="0"
-            step="0.01"
-            value={rate}
-            onChange={(e) =>
-              setRate(
-                Number(e.target.value)
-              )
-            }
-          />
-        </div>
-
-        <div className="form-field">
-          <label>
-            Interest Amount
-          </label>
-
-          <input
-            value={
-              "₹" +
-              interest.toLocaleString(
-                "en-IN"
-              )
-            }
-            readOnly
-          />
-        </div>
-
-        <div className="form-field">
-          <label>Amount Given</label>
-
-          <input
-            value={
-              "₹" +
-              amountGiven.toLocaleString(
-                "en-IN"
-              )
-            }
-            readOnly
-          />
-        </div>
-
-        {type === "EMI" ? (
           <div className="form-field">
-            <label>Duration</label>
+            <label>Loan ID</label>
 
             <input
-              value={`${emiDuration} ${durationUnit}`}
+              value={loanId}
               readOnly
             />
           </div>
-        ) : (
+
+          {/* CYCLE */}
+
           <div className="form-field">
             <label>
-              IO Duration (
-              {durationUnit}) *
+              Collection Cycle *
+            </label>
+
+            <div className="choices">
+              {[
+                "Daily",
+                "Weekly",
+                "Monthly",
+              ].map((x) => (
+                <button
+                  type="button"
+                  key={x}
+                  className={
+                    cycle === x
+                      ? "active"
+                      : ""
+                  }
+                  onClick={() =>
+                    setCycle(x)
+                  }
+                >
+                  {x}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* DATE */}
+
+          <div className="form-field">
+            <label>
+              Loan Given Date *
+            </label>
+
+            <input
+              type="date"
+              value={loanDate}
+              onChange={(e) =>
+                setLoanDate(
+                  e.target.value
+                )
+              }
+            />
+          </div>
+
+          {/* LOAN AMOUNT */}
+
+          <div className="form-field">
+            <label>
+              Loan Amount *
             </label>
 
             <input
               type="number"
               min="1"
-              value={ioDuration}
+              value={amount}
               onChange={(e) =>
-                setIoDuration(
+                setAmount(
                   Number(
                     e.target.value
                   )
@@ -339,52 +364,319 @@ export default function AddLoan() {
               }
             />
           </div>
-        )}
 
-        <div className="form-field">
-          <label>
-            {type === "IO"
-              ? `Interest Collection / ${cycle}`
-              : `${cycle} Collection Amount`}
-          </label>
+          {/* PERIOD */}
 
-          <input
-            value={
-              "₹" +
-              collection.toLocaleString(
-                "en-IN",
-                {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
+          <div className="form-field">
+            <label>
+              Period ({durationUnit}) *
+            </label>
+
+            <input
+              type="number"
+              min="1"
+              value={period}
+              onChange={(e) =>
+                setPeriod(
+                  Number(
+                    e.target.value
+                  )
+                )
+              }
+            />
+          </div>
+
+          {/* INTEREST RATE */}
+
+          <div className="form-field">
+            <label>
+              Interest Rate % *
+            </label>
+
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={rate}
+              onChange={(e) =>
+                setRate(
+                  Number(
+                    e.target.value
+                  )
+                )
+              }
+            />
+          </div>
+
+          {/* INTEREST AMOUNT */}
+
+          <div className="form-field">
+            <label>
+              Interest Amount
+            </label>
+
+            <input
+              value={
+                "₹" +
+                interestAmount.toLocaleString(
+                  "en-IN",
+                  {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  }
+                )
+              }
+              readOnly
+            />
+          </div>
+
+          {/* INTEREST TAKEN */}
+
+          <div className="form-field">
+            <label>
+              Interest Amount Taken?
+            </label>
+
+            <div className="choices">
+
+              <button
+                type="button"
+                className={
+                  interestTakenUpfront
+                    ? "active"
+                    : ""
                 }
-              )
-            }
-            readOnly
-          />
+                onClick={() =>
+                  setInterestTakenUpfront(
+                    true
+                  )
+                }
+              >
+                Yes
+              </button>
+
+              <button
+                type="button"
+                className={
+                  !interestTakenUpfront
+                    ? "active"
+                    : ""
+                }
+                onClick={() =>
+                  setInterestTakenUpfront(
+                    false
+                  )
+                }
+              >
+                No
+              </button>
+
+            </div>
+          </div>
+
+          {/* AMOUNT GIVEN */}
+
+          <div className="form-field">
+            <label>
+              Amount Given
+            </label>
+
+            <input
+              value={
+                "₹" +
+                amountGiven.toLocaleString(
+                  "en-IN",
+                  {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  }
+                )
+              }
+              readOnly
+            />
+          </div>
+
+          {/* TOTAL REPAYMENT */}
+
+          <div className="form-field">
+            <label>
+              Total Repayment
+            </label>
+
+            <input
+              value={
+                "₹" +
+                totalRepayment.toLocaleString(
+                  "en-IN",
+                  {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  }
+                )
+              }
+              readOnly
+            />
+          </div>
+
+          {/* COLLECTION AMOUNT */}
+
+          <div className="form-field">
+            <label>
+              {collectionLabel}
+            </label>
+
+            <input
+              value={
+                "₹" +
+                collectionAmount.toLocaleString(
+                  "en-IN",
+                  {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  }
+                )
+              }
+              readOnly
+            />
+          </div>
+
         </div>
 
-      </div>
+        {/* SUMMARY */}
 
-      <div className="customer-actions">
+        <div className="loan-summary-card">
+          <div className="loan-summary-title">
+            Loan Summary
+          </div>
 
-        <button
-          type="button"
-          className="cancel-button"
-          onClick={() => navigate(-1)}
-        >
-          ← Back
-        </button>
+          <div className="loan-summary-grid">
+            <div className="loan-summary-item">
+              <span>Loan Amount</span>
+              <strong>
+                ₹{amount.toLocaleString("en-IN")}
+              </strong>
+            </div>
 
-        <button
-          type="button"
-          className="primary save-customer-button"
-          onClick={handleSaveLoan}
-        >
-          Save New Loan
-        </button>
+            <div className="loan-summary-item">
+              <span>Interest</span>
+              <strong>
+                ₹{interestAmount.toLocaleString("en-IN")}
+              </strong>
+            </div>
 
-      </div>
+            <div className="loan-summary-item">
+              <span>Amount Given</span>
+              <strong>
+                ₹{amountGiven.toLocaleString("en-IN")}
+              </strong>
+            </div>
 
-    </section>
+            <div className="loan-summary-item">
+              <span>{collectionLabel}</span>
+              <strong className="loan-summary-highlight">
+                ₹{collectionAmount.toLocaleString("en-IN", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </strong>
+            </div>
+          </div>
+        </div>
+
+        {/* ACTIONS */}
+
+        <div className="customer-actions">
+
+          <button
+            type="button"
+            className="cancel-button"
+            onClick={() =>
+              navigate(-1)
+            }
+          >
+            ← Back
+          </button>
+
+          <button
+            type="button"
+            className="primary save-customer-button"
+            onClick={
+              handleSaveLoan
+            }
+          >
+            Save New Loan
+          </button>
+
+        </div>
+
+      </section>
+
+      {/* =====================================================
+          SUCCESS POPUP
+      ===================================================== */}
+
+      {showSuccess && (
+        <div className="loan-success-overlay">
+          <div className="loan-success-modal">
+
+            <div className="loan-success-icon-wrap">
+              <div className="loan-success-icon">
+                ✓
+              </div>
+            </div>
+
+            <h2>Loan Created</h2>
+
+            <p className="loan-success-message">
+              New loan has been added successfully for{" "}
+              <strong>
+                {customerRecord.customer.name}
+              </strong>
+              .
+            </p>
+
+            <div className="loan-success-details">
+
+              <div className="loan-success-row">
+                <span>Loan ID</span>
+                <strong>{loanId}</strong>
+              </div>
+
+              <div className="loan-success-divider" />
+
+              <div className="loan-success-row">
+                <span>Amount Given</span>
+                <strong>
+                  ₹{amountGiven.toLocaleString("en-IN")}
+                </strong>
+              </div>
+
+              <div className="loan-success-divider" />
+
+              <div className="loan-success-row">
+                <span>{collectionLabel}</span>
+                <strong>
+                  ₹{collectionAmount.toLocaleString("en-IN", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </strong>
+              </div>
+
+            </div>
+
+            <button
+              type="button"
+              className="primary loan-success-button"
+              onClick={handleSuccessDone}
+            >
+              View Customer
+            </button>
+
+          </div>
+        </div>
+      )}
+
+    </>
   );
 }

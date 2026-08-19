@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router";
 import {
   findCustomer,
   precloseLoan,
+  recordLoanPayment,
 } from "../utils/customerStorage";
 import { getPhoto } from "../utils/photoStorage";
 
@@ -16,6 +17,11 @@ function formatMoney(value) {
 function formatDate(value) {
   if (!value) return "-";
 
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const [year, month, day] = value.split("-");
+    return `${day}/${month}/${year}`;
+  }
+
   const date = new Date(value);
 
   if (Number.isNaN(date.getTime())) {
@@ -25,29 +31,447 @@ function formatDate(value) {
   return date.toLocaleDateString("en-IN");
 }
 
+function formatCreatedDate(value) {
+  if (!value) return "-";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "-";
+  }
+
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = String(date.getFullYear()).slice(-2);
+
+  return `${day}-${month}-${year}`;
+}
+
+function getTodayLocalDate() {
+  const today = new Date();
+
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+function getPaymentDateTime(payment) {
+  const value = payment?.paymentDate;
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value || "")) {
+    const [year, month, day] = value
+      .split("-")
+      .map(Number);
+
+    return new Date(
+      year,
+      month - 1,
+      day,
+      0,
+      0,
+      0,
+      0
+    ).getTime();
+  }
+
+  if (
+    /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(
+      value || ""
+    )
+  ) {
+    const [day, month, year] = value
+      .split("/")
+      .map(Number);
+
+    return new Date(
+      year,
+      month - 1,
+      day,
+      0,
+      0,
+      0,
+      0
+    ).getTime();
+  }
+
+  const fallback = new Date(
+    payment?.paidAt || 0
+  ).getTime();
+
+  return Number.isNaN(fallback)
+    ? 0
+    : fallback;
+}
+
+/* =========================================================
+   LOAN OUTSTANDING
+========================================================= */
+
+function getLoanOutstanding(loan) {
+  if (!loan) return 0;
+
+  if (
+    loan.status === "Closed" ||
+    loan.status === "Preclosed"
+  ) {
+    return 0;
+  }
+
+  if (loan.loanType === "IO") {
+    return Math.max(
+      0,
+      Number(
+        loan.principalPending ??
+          loan.loanAmount ??
+          0
+      )
+    );
+  }
+
+  const repayableAmount = Number(
+    loan.totalRepayment ??
+      loan.loanAmount ??
+      0
+  );
+
+  const collectedAmount = Number(
+    loan.collectedAmount || 0
+  );
+
+  return Math.max(
+    0,
+    repayableAmount - collectedAmount
+  );
+}
+
+/* =========================================================
+   CYCLE DISPLAY
+
+   Daily   -> Daily
+   Weekly  -> Monday / Weekly
+   Monthly -> 19th / Monthly
+========================================================= */
+
+function getLoanCycleDisplay(loan) {
+  const cycle = loan?.cycle || "-";
+  const loanDate = loan?.loanDate;
+
+  if (!loanDate) {
+    return cycle;
+  }
+
+  const date = new Date(
+    `${loanDate}T00:00:00`
+  );
+
+  if (Number.isNaN(date.getTime())) {
+    return cycle;
+  }
+
+  if (cycle === "Weekly") {
+    const weekday =
+      date.toLocaleDateString(
+        "en-US",
+        {
+          weekday: "long",
+        }
+      );
+
+    return `${weekday} / Weekly`;
+  }
+
+  if (cycle === "Monthly") {
+    const day = date.getDate();
+
+    const suffix =
+      day % 10 === 1 && day !== 11
+        ? "st"
+        : day % 10 === 2 &&
+          day !== 12
+        ? "nd"
+        : day % 10 === 3 &&
+          day !== 13
+        ? "rd"
+        : "th";
+
+    return `${day}${suffix} / Monthly`;
+  }
+
+  return "Daily";
+}
+
+/* =========================================================
+   LOAN COUNTS
+========================================================= */
+
+function getLoanHistoryStats(loan) {
+  const history =
+    Array.isArray(
+      loan?.paymentHistory
+    )
+      ? loan.paymentHistory
+      : [];
+
+  const duePayments =
+    history.filter(
+      (payment) =>
+        payment.paymentType ===
+        "Due"
+    );
+
+  const finePayments =
+    history.filter(
+      (payment) =>
+        payment.paymentType ===
+        "Fine"
+    );
+
+  const paidCount =
+    duePayments.filter(
+      (payment) =>
+        Number(
+          payment.amount || 0
+        ) > 0
+    ).length;
+
+  const pendingCount =
+    duePayments.filter(
+      (payment) =>
+        Number(
+          payment.pendingAfter ||
+            0
+        ) > 0
+    ).length;
+
+  /*
+    For now a payment is counted as late
+    when it had previous pending or creates pending.
+
+    Later we can make this 100% date-based
+    using scheduled due dates.
+  */
+
+  const latePaymentCount =
+    duePayments.filter(
+      (payment) =>
+        Number(
+          payment.previousPending ||
+            0
+        ) > 0 ||
+        Number(
+          payment.pendingAfter ||
+            0
+        ) > 0
+    ).length;
+
+  const finePaidCount =
+    finePayments.filter(
+      (payment) =>
+        Number(
+          payment.amount || 0
+        ) > 0
+    ).length;
+
+  const totalFinePaid =
+    finePayments.reduce(
+      (sum, payment) =>
+        sum +
+        Number(
+          payment.amount ??
+            payment.fineAmount ??
+            0
+        ),
+      0
+    );
+
+  const totalAmountReceived =
+    history.reduce(
+      (sum, payment) => {
+        const type =
+          payment.paymentType ||
+          "Due";
+
+        /*
+          Loan Given / Borrow is outgoing.
+          Do not count it as amount received.
+        */
+
+        if (
+          type === "Loan Given"
+        ) {
+          return sum;
+        }
+
+        return (
+          sum +
+          Number(
+            payment.amount ??
+              payment.fineAmount ??
+              payment.fineAdded ??
+              0
+          )
+        );
+      },
+      0
+    );
+
+  const duration =
+    Number(
+      loan?.duration || 0
+    );
+
+  const outstandingCount =
+    loan?.status === "Active"
+      ? Math.max(
+          0,
+          duration - paidCount
+        )
+      : 0;
+
+  return {
+    paidCount,
+    pendingCount,
+    latePaymentCount,
+    finePaidCount,
+    totalFinePaid,
+    totalAmountReceived,
+    outstandingCount,
+  };
+}
+
+/* =========================================================
+   PAYMENT TYPE LABEL
+========================================================= */
+
+function getPaymentTypeLabel(
+  paymentType
+) {
+  if (
+    paymentType === "Loan Given"
+  ) {
+    return "Borrow";
+  }
+
+  if (
+    paymentType === "Preclose"
+  ) {
+    return "Preclose";
+  }
+
+  if (
+    paymentType === "Fine"
+  ) {
+    return "Fine";
+  }
+
+  return "Due";
+}
+
+/* =========================================================
+   CUSTOMER PROFILE
+========================================================= */
+
 export default function CustomerProfile() {
-  const { customerId } = useParams();
-  const navigate = useNavigate();
-  const [viewPhoto, setViewPhoto] = useState(null);
+  const { customerId } =
+    useParams();
 
-  const [record, setRecord] = useState(null);
+  const navigate =
+    useNavigate();
 
-  const [customerPhotoUrl, setCustomerPhotoUrl] =
-    useState("");
-  const [jaminPhotoUrl, setJaminPhotoUrl] =
-    useState("");
-  const [customerDocumentUrl, setCustomerDocumentUrl] =
-    useState("");
-  const [jaminDocumentUrl, setJaminDocumentUrl] =
-    useState("");
+  const [
+    viewPhoto,
+    setViewPhoto,
+  ] = useState(null);
+
+  /* PAYMENT */
+
+  const [
+    paymentLoan,
+    setPaymentLoan,
+  ] = useState(null);
+
+  const [
+    paymentTab,
+    setPaymentTab,
+  ] = useState("Due");
+
+  const [
+    paymentDate,
+    setPaymentDate,
+  ] = useState(
+    getTodayLocalDate
+  );
+
+  const [
+    amountReceived,
+    setAmountReceived,
+  ] = useState("");
+
+  const [
+    fineAmount,
+    setFineAmount,
+  ] = useState("");
+
+  const [
+    collectedBy,
+    setCollectedBy,
+  ] = useState("Owner");
+
+  /* PRECLOSE */
+
+  const [
+    precloseLoanData,
+    setPrecloseLoanData,
+  ] = useState(null);
+
+  /* CUSTOMER */
+
+  const [
+    record,
+    setRecord,
+  ] = useState(null);
+
+  /* PHOTOS */
+
+  const [
+    customerPhotoUrl,
+    setCustomerPhotoUrl,
+  ] = useState("");
+
+  const [
+    jaminPhotoUrl,
+    setJaminPhotoUrl,
+  ] = useState("");
+
+  const [
+    customerDocumentUrl,
+    setCustomerDocumentUrl,
+  ] = useState("");
+
+  const [
+    jaminDocumentUrl,
+    setJaminDocumentUrl,
+  ] = useState("");
+
+  /* =========================================================
+     RELOAD CUSTOMER
+  ========================================================= */
 
   const reloadCustomer = () => {
-    setRecord(findCustomer(customerId));
+    setRecord(
+      findCustomer(customerId)
+    );
   };
 
   useEffect(() => {
     reloadCustomer();
   }, [customerId]);
+
+  /* =========================================================
+     LOAD PHOTOS
+  ========================================================= */
 
   useEffect(() => {
     let active = true;
@@ -62,39 +486,85 @@ export default function CustomerProfile() {
           customerDocument,
           jaminDocument,
         ] = await Promise.all([
-          getPhoto(customerId, "customerPhoto"),
-          getPhoto(customerId, "jaminPhoto"),
-          getPhoto(customerId, "customerDocument"),
-          getPhoto(customerId, "jaminDocument"),
+          getPhoto(
+            customerId,
+            "customerPhoto"
+          ),
+
+          getPhoto(
+            customerId,
+            "jaminPhoto"
+          ),
+
+          getPhoto(
+            customerId,
+            "customerDocument"
+          ),
+
+          getPhoto(
+            customerId,
+            "jaminDocument"
+          ),
         ]);
 
         if (!active) return;
 
         if (customerPhoto) {
-          const url = URL.createObjectURL(customerPhoto);
+          const url =
+            URL.createObjectURL(
+              customerPhoto
+            );
+
           urls.push(url);
-          setCustomerPhotoUrl(url);
+
+          setCustomerPhotoUrl(
+            url
+          );
         }
 
         if (jaminPhoto) {
-          const url = URL.createObjectURL(jaminPhoto);
+          const url =
+            URL.createObjectURL(
+              jaminPhoto
+            );
+
           urls.push(url);
-          setJaminPhotoUrl(url);
+
+          setJaminPhotoUrl(
+            url
+          );
         }
 
         if (customerDocument) {
-          const url = URL.createObjectURL(customerDocument);
+          const url =
+            URL.createObjectURL(
+              customerDocument
+            );
+
           urls.push(url);
-          setCustomerDocumentUrl(url);
+
+          setCustomerDocumentUrl(
+            url
+          );
         }
 
         if (jaminDocument) {
-          const url = URL.createObjectURL(jaminDocument);
+          const url =
+            URL.createObjectURL(
+              jaminDocument
+            );
+
           urls.push(url);
-          setJaminDocumentUrl(url);
+
+          setJaminDocumentUrl(
+            url
+          );
         }
       } catch (error) {
-        console.error("LOAD PROFILE MEDIA ERROR:", error);
+        console.error(
+          "LOAD PROFILE MEDIA ERROR:",
+          error
+        );
       }
     }
 
@@ -102,99 +572,477 @@ export default function CustomerProfile() {
 
     return () => {
       active = false;
-      urls.forEach((url) => URL.revokeObjectURL(url));
+
+      urls.forEach(
+        (url) =>
+          URL.revokeObjectURL(
+            url
+          )
+      );
     };
   }, [customerId]);
 
-  const activeLoanCount = useMemo(
-    () =>
-      (record?.loans || []).filter(
-        (loan) => loan.status === "Active"
-      ).length,
-    [record]
-  );
+  /* =========================================================
+     HEADER COUNTS
+  ========================================================= */
 
-  const handlePreclose = (loan) => {
-    const loanAmount = Number(loan.loanAmount || 0);
-    const collectedAmount = Number(
-      loan.collectedAmount || 0
+  const activeLoanCount =
+    useMemo(
+      () =>
+        (
+          record?.loans || []
+        ).filter(
+          (loan) =>
+            loan.status ===
+            "Active"
+        ).length,
+      [record]
     );
 
+  const closedLoanCount =
+    useMemo(
+      () =>
+        (
+          record?.loans || []
+        ).filter(
+          (loan) =>
+            loan.status ===
+              "Closed" ||
+            loan.status ===
+              "Preclosed"
+        ).length,
+      [record]
+    );
+
+  const overallOutstanding =
+    useMemo(
+      () =>
+        (
+          record?.loans || []
+        ).reduce(
+          (sum, loan) =>
+            sum +
+            getLoanOutstanding(
+              loan
+            ),
+          0
+        ),
+      [record]
+    );
+
+  const overallPending =
+    useMemo(
+      () =>
+        (
+          record?.loans || []
+        ).reduce(
+          (sum, loan) =>
+            sum +
+            Number(
+              loan.pendingDue ||
+                0
+            ),
+          0
+        ),
+      [record]
+    );
+
+  const customerStatus =
+    activeLoanCount > 0
+      ? "Active"
+      : "Closed";
+
+  /* =========================================================
+     PRECLOSE
+  ========================================================= */
+
+  const handlePreclose = (
+    loan
+  ) => {
     const amountToPreclose =
-      loan.loanType === "IO"
-        ? Number(
-            loan.principalPending ?? loanAmount
-          )
-        : Math.max(
-            0,
-            loanAmount - collectedAmount
-          );
+      getLoanOutstanding(
+        loan
+      );
 
-    const confirmed = window.confirm(
-      `Preclose this loan?\n\nLoan ID: ${loan.loanId}\nPreclose Amount: ₹${formatMoney(
-        amountToPreclose
-      )}`
-    );
-
-    if (!confirmed) return;
-
-    const result = precloseLoan(
-      customerId,
-      loan.loanId
-    );
-
-    if (!result) {
-      alert("Unable to preclose this loan.");
-      return;
-    }
-
-    alert(
-      `Loan preclosed successfully.\n\nAmount: ₹${formatMoney(
-        result.precloseAmount
-      )}`
-    );
-
-    reloadCustomer();
+    setPrecloseLoanData({
+      loan,
+      amountToPreclose,
+    });
   };
+
+  const closePreclosePopup =
+    () => {
+      setPrecloseLoanData(
+        null
+      );
+    };
+
+  const confirmPrecloseLoan =
+    () => {
+      if (
+        !precloseLoanData
+      ) {
+        return;
+      }
+
+      const result =
+        precloseLoan(
+          customerId,
+
+          precloseLoanData
+            .loan.loanId
+        );
+
+      if (!result) {
+        alert(
+          "Unable to preclose this loan."
+        );
+
+        return;
+      }
+
+      setPrecloseLoanData(
+        null
+      );
+
+      reloadCustomer();
+    };
+
+  /* =========================================================
+     OPEN PAYMENT
+  ========================================================= */
+
+  const openPayment = (
+    loan
+  ) => {
+    setPaymentLoan(loan);
+
+    setPaymentTab(
+      "Due"
+    );
+
+    setPaymentDate(
+      getTodayLocalDate()
+    );
+
+    setAmountReceived(
+      String(
+        Number(
+          loan.collectionAmount ||
+            0
+        ) +
+          Number(
+            loan.pendingDue ||
+              0
+          )
+      )
+    );
+
+    setFineAmount("");
+
+    setCollectedBy(
+      "Owner"
+    );
+  };
+
+  const closePayment = () => {
+    setPaymentLoan(null);
+
+    setPaymentTab("Due");
+
+    setPaymentDate(
+      getTodayLocalDate()
+    );
+
+    setAmountReceived("");
+
+    setFineAmount("");
+
+    setCollectedBy(
+      "Owner"
+    );
+  };
+
+  /* =========================================================
+     SAVE DUE
+  ========================================================= */
+
+  const handleSaveDuePayment =
+    () => {
+      if (!paymentLoan) {
+        return;
+      }
+
+      if (!paymentDate) {
+        alert(
+          "Please select payment date."
+        );
+
+        return;
+      }
+
+      if (
+        paymentDate >
+        getTodayLocalDate()
+      ) {
+        alert(
+          "Future payment date is not allowed."
+        );
+
+        return;
+      }
+
+      const due =
+        Number(
+          paymentLoan.collectionAmount ||
+            0
+        );
+
+      const paid =
+        Number(
+          amountReceived ||
+            0
+        );
+
+      if (paid <= 0) {
+        alert(
+          "Please enter amount received."
+        );
+
+        return;
+      }
+
+      const result =
+        recordLoanPayment(
+          customerId,
+
+          paymentLoan.loanId,
+
+          {
+            paymentType:
+              "Due",
+
+            paymentDate,
+
+            dueAmount:
+              due,
+
+            amount:
+              paid,
+
+            collectedBy,
+          }
+        );
+
+      if (!result) {
+        alert(
+          "Unable to save due payment."
+        );
+
+        return;
+      }
+
+      closePayment();
+
+      reloadCustomer();
+    };
+
+  /* =========================================================
+     SAVE FINE
+  ========================================================= */
+
+  const handleSaveFinePayment =
+    () => {
+      if (!paymentLoan) {
+        return;
+      }
+
+      if (!paymentDate) {
+        alert(
+          "Please select payment date."
+        );
+
+        return;
+      }
+
+      if (
+        paymentDate >
+        getTodayLocalDate()
+      ) {
+        alert(
+          "Future payment date is not allowed."
+        );
+
+        return;
+      }
+
+      const amount =
+        Number(
+          fineAmount || 0
+        );
+
+      if (amount <= 0) {
+        alert(
+          "Please enter fine amount."
+        );
+
+        return;
+      }
+
+      const result =
+        recordLoanPayment(
+          customerId,
+
+          paymentLoan.loanId,
+
+          {
+            paymentType:
+              "Fine",
+
+            paymentDate,
+
+            fineAmount:
+              amount,
+
+            collectedBy,
+          }
+        );
+
+      if (!result) {
+        alert(
+          "Unable to save fine."
+        );
+
+        return;
+      }
+
+      closePayment();
+
+      reloadCustomer();
+    };
+
+  /* =========================================================
+     CUSTOMER NOT FOUND
+  ========================================================= */
 
   if (!record) {
     return (
       <section className="panel">
-        <h1>Customer Not Found</h1>
+
+        <h1>
+          Customer Not Found
+        </h1>
 
         <button
           className="primary"
-          onClick={() => navigate("/customers/all")}
+
+          onClick={() =>
+            navigate(
+              "/customers/all"
+            )
+          }
         >
           Back to Customers
         </button>
+
       </section>
     );
   }
 
-  const customer = record.customer || {};
-  const jamin = record.jamin || {};
-  const loans = record.loans || [];
+  const customer =
+    record.customer || {};
+
+  const jamin =
+    record.jamin || {};
+
+  const loans =
+    record.loans || [];
+
+  /* =========================================================
+     PAYMENT HISTORY
+  ========================================================= */
+
+  const paymentHistory =
+    loans
+      .flatMap(
+        (loan) =>
+          (
+            loan.paymentHistory ||
+            []
+          ).map(
+            (payment) => ({
+              ...payment,
+
+              loanId:
+                loan.loanId,
+            })
+          )
+      )
+      .sort(
+        (a, b) => {
+          const dateDifference =
+            getPaymentDateTime(
+              b
+            ) -
+            getPaymentDateTime(
+              a
+            );
+
+          if (
+            dateDifference !== 0
+          ) {
+            return dateDifference;
+          }
+
+          const aSavedTime =
+            new Date(
+              a.paidAt || 0
+            ).getTime();
+
+          const bSavedTime =
+            new Date(
+              b.paidAt || 0
+            ).getTime();
+
+          return (
+            bSavedTime -
+            aSavedTime
+          );
+        }
+      );
 
   return (
     <section className="panel customer-profile">
 
-      {/* PROFILE HEADER */}
+      {/* =====================================================
+          CUSTOMER HEADER
+      ===================================================== */}
 
-      <div className="profile-top">
+      <div className="customer-profile-header-card">
 
-        <div className="profile-person">
+        <div className="customer-profile-header-main">
 
           <div className="profile-photo-large">
+
             {customerPhotoUrl ? (
               <img
-                src={customerPhotoUrl}
-                alt={customer.name}
+                src={
+                  customerPhotoUrl
+                }
+
+                alt={
+                  customer.name
+                }
+
                 className="clickable-profile-photo"
+
                 onClick={() =>
                   setViewPhoto({
-                    src: customerPhotoUrl,
-                    title: `${customer.name} - Customer Photo`,
+                    src:
+                      customerPhotoUrl,
+
+                    title:
+                      `${customer.name} - Customer Photo`,
                   })
                 }
               />
@@ -202,58 +1050,132 @@ export default function CustomerProfile() {
               <span>
                 {customer.name
                   ?.charAt(0)
-                  .toUpperCase() || "C"}
+                  .toUpperCase() ||
+                  "C"}
               </span>
             )}
+
           </div>
 
-          <div>
-            <h1>{customer.name}</h1>
+          <div className="customer-profile-header-info">
 
-            <p className="muted">
-              {customer.customerId} • {customer.mobile}
-            </p>
+            <h1>
+              {customer.name}
+            </h1>
+
+            <div className="customer-header-contact">
+
+              <span>
+                {
+                  customer.customerId
+                }
+              </span>
+
+              <span>
+                •
+              </span>
+
+              <span>
+                {
+                  customer.mobile
+                }
+              </span>
+
+            </div>
 
             <div className="profile-badges">
-              <span className="status-badge active">
-                {record.status || "Active"}
+
+              <span
+                className={`status-badge ${customerStatus.toLowerCase()}`}
+              >
+                {
+                  customerStatus
+                }
               </span>
 
-              <span className="status-badge">
-                {activeLoanCount} Active Loan
-                {activeLoanCount !== 1 ? "s" : ""}
-              </span>
+              {activeLoanCount >
+                0 && (
+                <span className="status-badge active">
+                  {
+                    activeLoanCount
+                  }{" "}
+                  Active
+                </span>
+              )}
+
+              {closedLoanCount >
+                0 && (
+                <span className="status-badge closed">
+                  {
+                    closedLoanCount
+                  }{" "}
+                  Closed
+                </span>
+              )}
+
             </div>
+
           </div>
 
         </div>
 
-        <div className="profile-actions">
+        <div className="customer-header-summary">
+
+          <div className="customer-header-stat">
+
+            <span>
+              Overall Outstanding
+            </span>
+
+            <strong>
+              ₹
+              {formatMoney(
+                overallOutstanding
+              )}
+            </strong>
+
+          </div>
+
+          <div className="customer-header-stat">
+
+            <span>
+              Overall Pending
+            </span>
+
+            <strong>
+              ₹
+              {formatMoney(
+                overallPending
+              )}
+            </strong>
+
+          </div>
+
+        </div>
+
+        <div className="customer-header-actions">
 
           <button
-            className="cancel-button"
-            onClick={() => navigate(-1)}
-          >
-            ← Back
-          </button>
+            type="button"
 
-          <button
             className="primary"
+
             onClick={() =>
               navigate(
                 `/customers/${customer.customerId}/add-loan`
               )
             }
           >
-            + Add New Loan
+            + Add Loan
           </button>
 
         </div>
 
       </div>
 
-
-      {/* CUSTOMER DETAILS */}
+      {/* =====================================================
+          CUSTOMER INFORMATION
+      ===================================================== */}
 
       <div className="profile-section">
 
@@ -264,35 +1186,79 @@ export default function CustomerProfile() {
         <div className="profile-info-grid">
 
           <div>
-            <span>Father's Name</span>
-            <b>{customer.fatherName || "-"}</b>
+            <span>
+              Account Created On
+            </span>
+
+            <b>
+              {formatCreatedDate(
+                record.createdAt
+              )}
+            </b>
           </div>
 
           <div>
-            <span>Work</span>
-            <b>{customer.work || "-"}</b>
+            <span>
+              Father's Name
+            </span>
+
+            <b>
+              {
+                customer.fatherName ||
+                "-"
+              }
+            </b>
           </div>
 
           <div>
-            <span>Date</span>
-            <b>{formatDate(customer.date)}</b>
+            <span>
+              Work
+            </span>
+
+            <b>
+              {
+                customer.work ||
+                "-"
+              }
+            </b>
           </div>
 
           <div>
-            <span>Document Type</span>
-            <b>{customer.documentType || "-"}</b>
+            <span>
+              Document
+            </span>
+
+            <b>
+              {
+                customer.documentType ||
+                "-"
+              }
+            </b>
           </div>
 
           <div className="profile-full">
-            <span>Address</span>
-            <b>{customer.address || "-"}</b>
+
+            <span>
+              Address
+            </span>
+
+            <b>
+              {
+                customer.address ||
+                "-"
+              }
+            </b>
+
           </div>
 
         </div>
 
         {customerDocumentUrl && (
           <button
+            type="button"
+
             className="document-button"
+
             onClick={() =>
               window.open(
                 customerDocumentUrl,
@@ -300,14 +1266,15 @@ export default function CustomerProfile() {
               )
             }
           >
-            View Customer Document
+            View Document
           </button>
         )}
 
       </div>
 
-
-      {/* JAMIN DETAILS */}
+      {/* =====================================================
+          JAMIN INFORMATION
+      ===================================================== */}
 
       <div className="profile-section">
 
@@ -318,15 +1285,26 @@ export default function CustomerProfile() {
         <div className="jamin-profile-layout">
 
           <div className="jamin-photo">
+
             {jaminPhotoUrl ? (
               <img
-                src={jaminPhotoUrl}
-                alt={jamin.name}
+                src={
+                  jaminPhotoUrl
+                }
+
+                alt={
+                  jamin.name
+                }
+
                 className="clickable-profile-photo"
+
                 onClick={() =>
                   setViewPhoto({
-                    src: jaminPhotoUrl,
-                    title: `${jamin.name} - Jamin Photo`,
+                    src:
+                      jaminPhotoUrl,
+
+                    title:
+                      `${jamin.name} - Jamin Photo`,
                   })
                 }
               />
@@ -334,46 +1312,93 @@ export default function CustomerProfile() {
               <span>
                 {jamin.name
                   ?.charAt(0)
-                  .toUpperCase() || "J"}
+                  .toUpperCase() ||
+                  "J"}
               </span>
             )}
+
           </div>
 
           <div className="profile-info-grid">
 
             <div>
-              <span>Name</span>
-              <b>{jamin.name || "-"}</b>
+              <span>
+                Name
+              </span>
+
+              <b>
+                {
+                  jamin.name ||
+                  "-"
+                }
+              </b>
             </div>
 
             <div>
-              <span>Mobile</span>
-              <b>{jamin.mobile || "-"}</b>
+              <span>
+                Father's Name
+              </span>
+
+              <b>
+                {
+                  jamin.fatherName ||
+                  "-"
+                }
+              </b>
             </div>
 
             <div>
-              <span>Father's Name</span>
-              <b>{jamin.fatherName || "-"}</b>
+              <span>
+                Mobile Number
+              </span>
+
+              <b>
+                {
+                  jamin.mobile ||
+                  "-"
+                }
+              </b>
             </div>
 
             <div>
-              <span>Work</span>
-              <b>{jamin.work || "-"}</b>
+              <span>
+                Work
+              </span>
+
+              <b>
+                {
+                  jamin.work ||
+                  "-"
+                }
+              </b>
             </div>
 
             <div>
-              <span>Date</span>
-              <b>{formatDate(jamin.date)}</b>
-            </div>
+              <span>
+                Document
+              </span>
 
-            <div>
-              <span>Document Type</span>
-              <b>{jamin.documentType || "-"}</b>
+              <b>
+                {
+                  jamin.documentType ||
+                  "-"
+                }
+              </b>
             </div>
 
             <div className="profile-full">
-              <span>Address</span>
-              <b>{jamin.address || "-"}</b>
+
+              <span>
+                Address
+              </span>
+
+              <b>
+                {
+                  jamin.address ||
+                  "-"
+                }
+              </b>
+
             </div>
 
           </div>
@@ -382,7 +1407,10 @@ export default function CustomerProfile() {
 
         {jaminDocumentUrl && (
           <button
+            type="button"
+
             className="document-button"
+
             onClick={() =>
               window.open(
                 jaminDocumentUrl,
@@ -390,232 +1418,1149 @@ export default function CustomerProfile() {
               )
             }
           >
-            View Jamin Document
+            View Document
           </button>
         )}
 
       </div>
 
-
-      {/* LOAN SLOTS */}
+      {/* =====================================================
+          LOAN SLOTS
+      ===================================================== */}
 
       <div className="profile-section">
 
-        <div className="profile-loan-heading">
-          <div className="form-section-title">
-            Loan Slots
-          </div>
-
-          <button
-            className="primary"
-            onClick={() =>
-              navigate(
-                `/customers/${customer.customerId}/add-loan`
-              )
-            }
-          >
-            + Add Loan
-          </button>
+        <div className="form-section-title">
+          Loan Slots
         </div>
 
         {loans.length === 0 ? (
           <div className="empty-customers">
-            <h3>No loans</h3>
+
+            <h3>
+              No loans
+            </h3>
+
           </div>
         ) : (
           <div className="loan-slot-list">
 
-            {loans.map((loan, index) => {
+            {loans.map(
+              (
+                loan,
+                index
+              ) => {
+                const outstanding =
+                  getLoanOutstanding(
+                    loan
+                  );
 
-              const loanAmount =
-                Number(loan.loanAmount || 0);
+                const pending =
+                  Number(
+                    loan.pendingDue ||
+                      0
+                  );
 
-              const collectedAmount =
-                Number(loan.collectedAmount || 0);
+                const finePending =
+                  Number(
+                    loan.fineDue ||
+                      0
+                  );
 
-              const outstanding =
-                loan.loanType === "IO"
-                  ? Number(
-                      loan.principalPending ??
-                        loanAmount
-                    )
-                  : Math.max(
-                      0,
-                      loanAmount -
-                        collectedAmount
-                    );
+                const finePaid =
+                  Number(
+                    loan.finePaidTotal ||
+                      0
+                  );
 
-              return (
-                <article
-                  className="loan-slot-card"
-                  key={loan.loanId}
-                >
+                const stats =
+                  getLoanHistoryStats(
+                    loan
+                  );
 
-                  <div className="loan-slot-header">
+                const isClosed =
+                  loan.status ===
+                    "Closed" ||
+                  loan.status ===
+                    "Preclosed";
 
-                    <div>
-                      <span className="loan-slot-number">
-                        Loan Slot {index + 1}
+                const closeType =
+                  loan.status ===
+                  "Preclosed"
+                    ? "Preclose"
+                    : "Due Closed";
+
+                return (
+                  <article
+                    className="loan-slot-card"
+
+                    key={
+                      loan.loanId
+                    }
+                  >
+
+                    {/* LOAN HEADER */}
+
+                    <div className="loan-slot-header">
+
+                      <div>
+
+                        <span className="loan-slot-number">
+                          Loan Slot{" "}
+                          {
+                            index +
+                            1
+                          }
+                        </span>
+
+                        <h3>
+                          {
+                            loan.loanId
+                          }
+                        </h3>
+
+                        <small className="loan-created-date">
+
+                          Created:{" "}
+
+                          {formatCreatedDate(
+                            loan.createdAt
+                          )}
+
+                        </small>
+
+                      </div>
+
+                      <span
+                        className={`status-badge ${String(
+                          loan.status ||
+                            "Active"
+                        ).toLowerCase()}`}
+                      >
+                        {loan.status ||
+                          "Active"}
                       </span>
 
-                      <h3>{loan.loanId}</h3>
                     </div>
 
-                    <span
-                      className={`status-badge ${String(
-                        loan.status || "Active"
-                      ).toLowerCase()}`}
-                    >
-                      {loan.status || "Active"}
-                    </span>
+                    {/* COUNTS */}
 
-                  </div>
+                    {(stats.outstandingCount >
+                      0 ||
+                      stats.paidCount >
+                        0 ||
+                      stats.pendingCount >
+                        0 ||
+                      stats.finePaidCount >
+                        0) && (
 
-                  <div className="loan-slot-grid">
+                      <div className="loan-count-summary">
 
-                    <div>
-                      <span>Loan Amount</span>
-                      <b>
-                        ₹{formatMoney(
-                          loan.loanAmount
+                        {stats.outstandingCount >
+                          0 && (
+                          <div>
+
+                            <span>
+                              Outstanding Count
+                            </span>
+
+                            <strong>
+                              {
+                                stats.outstandingCount
+                              }
+                            </strong>
+
+                          </div>
                         )}
-                      </b>
-                    </div>
 
-                    <div>
-                      <span>Amount Given</span>
-                      <b>
-                        ₹{formatMoney(
-                          loan.amountGiven
+                        {stats.paidCount >
+                          0 && (
+                          <div>
+
+                            <span>
+                              Paid Count
+                            </span>
+
+                            <strong>
+                              {
+                                stats.paidCount
+                              }
+                            </strong>
+
+                          </div>
                         )}
-                      </b>
-                    </div>
 
-                    <div>
-                      <span>Cycle</span>
-                      <b>{loan.cycle}</b>
-                    </div>
+                        {stats.pendingCount >
+                          0 && (
+                          <div>
 
-                    <div>
-                      <span>Loan Type</span>
-                      <b>{loan.loanType}</b>
-                    </div>
+                            <span>
+                              Pending Count
+                            </span>
 
-                    <div>
-                      <span>Interest</span>
-                      <b>
-                        {loan.interestRate}% / ₹
-                        {formatMoney(
-                          loan.interestAmount
+                            <strong>
+                              {
+                                stats.pendingCount
+                              }
+                            </strong>
+
+                          </div>
                         )}
-                      </b>
-                    </div>
 
-                    <div>
-                      <span>Collection</span>
-                      <b>
-                        ₹{formatMoney(
-                          loan.collectionAmount
+                        {stats.finePaidCount >
+                          0 && (
+                          <div>
+
+                            <span>
+                              Fine Paid Count
+                            </span>
+
+                            <strong>
+                              {
+                                stats.finePaidCount
+                              }
+                            </strong>
+
+                          </div>
                         )}
-                      </b>
-                    </div>
 
-                    <div>
-                      <span>Duration</span>
-                      <b>
-                        {loan.duration}{" "}
-                        {loan.durationUnit}
-                      </b>
-                    </div>
-
-                    <div>
-                      <span>Outstanding</span>
-                      <b>
-                        ₹{formatMoney(outstanding)}
-                      </b>
-                    </div>
-
-                    {loan.status === "Preclosed" && (
-                      <>
-                        <div>
-                          <span>
-                            Preclose Amount
-                          </span>
-                          <b>
-                            ₹{formatMoney(
-                              loan.precloseAmount
-                            )}
-                          </b>
-                        </div>
-
-                        <div>
-                          <span>
-                            Preclosed Date
-                          </span>
-                          <b>
-                            {formatDate(
-                              loan.preclosedAt
-                            )}
-                          </b>
-                        </div>
-                      </>
+                      </div>
                     )}
 
-                  </div>
+                    {/* LOAN DETAILS */}
 
-                  {loan.status === "Active" && (
-                    <div className="loan-slot-actions">
+                    <div className="loan-slot-grid">
 
-                      <button
-                        className="preclose-button"
-                        onClick={() =>
-                          handlePreclose(loan)
-                        }
-                      >
-                        Preclose Loan
-                      </button>
+                      <div>
+
+                        <span>
+                          Loan Amount
+                        </span>
+
+                        <b>
+                          ₹
+                          {formatMoney(
+                            loan.loanAmount
+                          )}
+                        </b>
+
+                      </div>
+
+                      <div>
+
+                        <span>
+                          Cycle
+                        </span>
+
+                        <b>
+                          {getLoanCycleDisplay(
+                            loan
+                          )}
+                        </b>
+
+                      </div>
+
+                      <div>
+
+                        <span>
+                          Loan Type
+                        </span>
+
+                        <b>
+                          {
+                            loan.loanType ||
+                            "-"
+                          }
+                        </b>
+
+                      </div>
+
+                      <div>
+
+                        <span>
+                          Interest Rate
+                        </span>
+
+                        <b>
+                          {Number(
+                            loan.interestRate ||
+                              0
+                          )}
+                          %
+                        </b>
+
+                      </div>
+
+                      <div>
+
+                        <span>
+                          Duration
+                        </span>
+
+                        <b>
+                          {
+                            loan.duration ||
+                            0
+                          }{" "}
+                          {
+                            loan.durationUnit ||
+                            ""
+                          }
+                        </b>
+
+                      </div>
+
+                      <div>
+
+                        <span>
+                          Due Amount
+                        </span>
+
+                        <b>
+                          ₹
+                          {formatMoney(
+                            loan.collectionAmount
+                          )}
+                        </b>
+
+                      </div>
+
+                      <div>
+
+                        <span>
+                          Outstanding
+                        </span>
+
+                        <b>
+                          ₹
+                          {formatMoney(
+                            outstanding
+                          )}
+                        </b>
+
+                      </div>
+
+                      <div>
+
+                        <span>
+                          Pending
+                        </span>
+
+                        <b>
+                          ₹
+                          {formatMoney(
+                            pending
+                          )}
+                        </b>
+
+                      </div>
+
+                      <div>
+
+                        <span>
+                          Fine Pending
+                        </span>
+
+                        <b>
+                          ₹
+                          {formatMoney(
+                            finePending
+                          )}
+                        </b>
+
+                      </div>
+
+                      <div>
+
+                        <span>
+                          Fine Paid
+                        </span>
+
+                        <b>
+                          ₹
+                          {formatMoney(
+                            finePaid
+                          )}
+                        </b>
+
+                      </div>
 
                     </div>
-                  )}
 
-                </article>
-              );
-            })}
+                    {/* CLOSED LOAN */}
+
+                    {isClosed && (
+
+                      <div className="closed-loan-summary">
+
+                        <div>
+
+                          <span>
+                            Late Payment Count
+                          </span>
+
+                          <strong>
+                            {
+                              stats.latePaymentCount
+                            }
+                          </strong>
+
+                        </div>
+
+                        <div>
+
+                          <span>
+                            Total Fine Paid
+                          </span>
+
+                          <strong>
+                            ₹
+                            {formatMoney(
+                              stats.totalFinePaid
+                            )}
+                          </strong>
+
+                        </div>
+
+                        <div>
+
+                          <span>
+                            Total Amount Received
+                          </span>
+
+                          <strong>
+                            ₹
+                            {formatMoney(
+                              stats.totalAmountReceived
+                            )}
+                          </strong>
+
+                        </div>
+
+                        <div>
+
+                          <span>
+                            Close Type
+                          </span>
+
+                          <strong>
+                            {
+                              closeType
+                            }
+                          </strong>
+
+                        </div>
+
+                        <div>
+
+                          <span>
+                            Closed On
+                          </span>
+
+                          <strong>
+                            {formatDate(
+                              loan.preclosedAt ||
+                                loan.closedAt
+                            )}
+                          </strong>
+
+                        </div>
+
+                      </div>
+                    )}
+
+                    {/* ACTIONS */}
+
+                    {loan.status ===
+                      "Active" && (
+
+                      <div className="loan-slot-actions">
+
+                        <button
+                          type="button"
+
+                          className="primary pay-now-button"
+
+                          onClick={() =>
+                            openPayment(
+                              loan
+                            )
+                          }
+                        >
+                          Pay
+                        </button>
+
+                        <button
+                          type="button"
+
+                          className="preclose-button"
+
+                          onClick={() =>
+                            handlePreclose(
+                              loan
+                            )
+                          }
+                        >
+                          Preclose
+                        </button>
+
+                      </div>
+                    )}
+
+                  </article>
+                );
+              }
+            )}
 
           </div>
         )}
 
       </div>
 
-      {/* PHOTO VIEWER */}
-      {viewPhoto && (
+      {/* =====================================================
+          PAYMENT HISTORY
+      ===================================================== */}
+
+      <div className="profile-section">
+
+        <div className="form-section-title">
+          Payment History
+        </div>
+
+        {paymentHistory.length ===
+        0 ? (
+
+          <div className="payment-history-empty">
+            No payment history yet.
+          </div>
+
+        ) : (
+
+          <div className="payment-history-wrap">
+
+            <table className="payment-history-table">
+
+              <thead>
+                <tr>
+
+                  <th>
+                    Date
+                  </th>
+
+                  <th>
+                    Loan ID
+                  </th>
+
+                  <th>
+                    Type
+                  </th>
+
+                  <th>
+                    Amount
+                  </th>
+
+                  <th>
+                    Collected By
+                  </th>
+
+                </tr>
+              </thead>
+
+              <tbody>
+
+                {paymentHistory.map(
+                  (
+                    payment
+                  ) => {
+
+                    const rawType =
+                      payment.paymentType ||
+                      "Due";
+
+                    const type =
+                      getPaymentTypeLabel(
+                        rawType
+                      );
+
+                    const amount =
+                      Number(
+                        payment.amount ??
+                          payment.fineAmount ??
+                          payment.fineAdded ??
+                          0
+                      );
+
+                    const isBorrow =
+                      rawType ===
+                      "Loan Given";
+
+                    return (
+                      <tr
+                        key={`${payment.loanId}-${payment.id}`}
+
+                        className={`payment-history-row ${rawType
+                          .toLowerCase()
+                          .replaceAll(
+                            " ",
+                            "-"
+                          )}`}
+                      >
+
+                        <td>
+                          {formatDate(
+                            payment.paymentDate ||
+                              payment.paidAt
+                          )}
+                        </td>
+
+                        <td>
+
+                          <b>
+                            {
+                              payment.loanId
+                            }
+                          </b>
+
+                        </td>
+
+                        <td>
+
+                          <span
+                            className={`payment-type-badge ${rawType
+                              .toLowerCase()
+                              .replaceAll(
+                                " ",
+                                "-"
+                              )}`}
+                          >
+                            {
+                              type
+                            }
+                          </span>
+
+                        </td>
+
+                        <td>
+
+                          <b
+                            className={
+                              isBorrow
+                                ? "cash-amount-outgoing"
+                                : "cash-amount-incoming"
+                            }
+                          >
+
+                            {isBorrow
+                              ? "−"
+                              : "+"}
+
+                            ₹
+                            {formatMoney(
+                              amount
+                            )}
+
+                          </b>
+
+                        </td>
+
+                        <td>
+
+                          {payment.collectedBy ||
+                            (isBorrow
+                              ? "Owner"
+                              : "-")}
+
+                        </td>
+
+                      </tr>
+                    );
+                  }
+                )}
+
+              </tbody>
+
+            </table>
+
+          </div>
+        )}
+
+      </div>
+
+      {/* =====================================================
+          PRECLOSE POPUP
+      ===================================================== */}
+
+      {precloseLoanData && (
+
         <div
-          className="photo-viewer-backdrop"
-          onClick={() => setViewPhoto(null)}
+          className="preclose-modal-backdrop"
+
+          onClick={
+            closePreclosePopup
+          }
         >
+
           <div
-            className="photo-viewer"
-            onClick={(e) => e.stopPropagation()}
+            className="preclose-modal"
+
+            onClick={(e) =>
+              e.stopPropagation()
+            }
           >
-            <div className="photo-viewer-header">
-              <h3>{viewPhoto.title}</h3>
+
+            <div className="preclose-modal-icon">
+              !
+            </div>
+
+            <h2>
+              Preclose Loan?
+            </h2>
+
+            <p className="preclose-modal-message">
+              Please confirm that you want to close this loan early.
+            </p>
+
+            <div className="preclose-modal-details">
+
+              <div>
+
+                <span>
+                  Loan ID
+                </span>
+
+                <strong>
+                  {
+                    precloseLoanData
+                      .loan.loanId
+                  }
+                </strong>
+
+              </div>
+
+              <div>
+
+                <span>
+                  Preclose Amount
+                </span>
+
+                <strong>
+                  ₹
+                  {formatMoney(
+                    precloseLoanData
+                      .amountToPreclose
+                  )}
+                </strong>
+
+              </div>
+
+            </div>
+
+            <div className="preclose-modal-actions">
 
               <button
                 type="button"
+
+                className="cancel-button"
+
+                onClick={
+                  closePreclosePopup
+                }
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+
+                className="preclose-confirm-button"
+
+                onClick={
+                  confirmPrecloseLoan
+                }
+              >
+                Confirm Preclose
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+      )}
+
+      {/* =====================================================
+          PAYMENT POPUP
+      ===================================================== */}
+
+      {paymentLoan && (
+
+        <div
+          className="payment-modal-backdrop"
+
+          onClick={
+            closePayment
+          }
+        >
+
+          <div
+            className="payment-modal"
+
+            onClick={(e) =>
+              e.stopPropagation()
+            }
+          >
+
+            <div className="payment-modal-header">
+
+              <div>
+
+                <h3>
+                  Pay Now
+                </h3>
+
+                <p>
+                  {customer.name}
+                  {" • "}
+                  {
+                    paymentLoan.loanId
+                  }
+                </p>
+
+              </div>
+
+              <button
+                type="button"
+
                 className="photo-viewer-close"
-                onClick={() => setViewPhoto(null)}
+
+                onClick={
+                  closePayment
+                }
               >
                 ×
               </button>
+
+            </div>
+
+            <div className="payment-tabs">
+
+              <button
+                type="button"
+
+                className={
+                  paymentTab ===
+                  "Due"
+                    ? "active"
+                    : ""
+                }
+
+                onClick={() =>
+                  setPaymentTab(
+                    "Due"
+                  )
+                }
+              >
+                Due
+              </button>
+
+              <button
+                type="button"
+
+                className={
+                  paymentTab ===
+                  "Fine"
+                    ? "active"
+                    : ""
+                }
+
+                onClick={() =>
+                  setPaymentTab(
+                    "Fine"
+                  )
+                }
+              >
+                Fine
+              </button>
+
+            </div>
+
+            <div className="payment-modal-body">
+
+              <label className="payment-field">
+
+                <span>
+                  Date *
+                </span>
+
+                <input
+                  type="date"
+
+                  value={
+                    paymentDate
+                  }
+
+                  max={
+                    getTodayLocalDate()
+                  }
+
+                  onChange={(e) =>
+                    setPaymentDate(
+                      e.target.value
+                    )
+                  }
+                />
+
+              </label>
+
+              <label className="payment-field">
+
+                <span>
+                  Collected By *
+                </span>
+
+                <select
+                  value={
+                    collectedBy
+                  }
+
+                  onChange={(e) =>
+                    setCollectedBy(
+                      e.target.value
+                    )
+                  }
+                >
+
+                  <option value="Owner">
+                    Owner
+                  </option>
+
+                  <option value="Agent 1">
+                    Agent 1
+                  </option>
+
+                  <option value="Agent 2">
+                    Agent 2
+                  </option>
+
+                  <option value="Agent 3">
+                    Agent 3
+                  </option>
+
+                </select>
+
+              </label>
+
+              {paymentTab ===
+                "Due" && (
+                <>
+
+                  <div className="payment-summary-grid">
+
+                    <div>
+
+                      <span>
+                        Due
+                      </span>
+
+                      <b>
+                        ₹
+                        {formatMoney(
+                          paymentLoan.collectionAmount
+                        )}
+                      </b>
+
+                    </div>
+
+                    <div>
+
+                      <span>
+                        Pending
+                      </span>
+
+                      <b>
+                        ₹
+                        {formatMoney(
+                          paymentLoan.pendingDue ||
+                            0
+                        )}
+                      </b>
+
+                    </div>
+
+                    <div>
+
+                      <span>
+                        Outstanding
+                      </span>
+
+                      <b>
+                        ₹
+                        {formatMoney(
+                          getLoanOutstanding(
+                            paymentLoan
+                          )
+                        )}
+                      </b>
+
+                    </div>
+
+                  </div>
+
+                  <label className="payment-field">
+
+                    <span>
+                      Amount Received *
+                    </span>
+
+                    <input
+                      type="number"
+
+                      min="0"
+
+                      value={
+                        amountReceived
+                      }
+
+                      onChange={(e) =>
+                        setAmountReceived(
+                          e.target.value
+                        )
+                      }
+                    />
+
+                  </label>
+
+                  <button
+                    type="button"
+
+                    className="primary full"
+
+                    onClick={
+                      handleSaveDuePayment
+                    }
+                  >
+                    Confirm Payment
+                  </button>
+
+                </>
+              )}
+
+              {paymentTab ===
+                "Fine" && (
+                <>
+
+                  <label className="payment-field">
+
+                    <span>
+                      Fine Amount *
+                    </span>
+
+                    <input
+                      type="number"
+
+                      min="0"
+
+                      placeholder="Enter fine amount"
+
+                      value={
+                        fineAmount
+                      }
+
+                      onChange={(e) =>
+                        setFineAmount(
+                          e.target.value
+                        )
+                      }
+                    />
+
+                  </label>
+
+                  <button
+                    type="button"
+
+                    className="primary full"
+
+                    onClick={
+                      handleSaveFinePayment
+                    }
+                  >
+                    Confirm Fine
+                  </button>
+
+                </>
+              )}
+
+            </div>
+
+          </div>
+
+        </div>
+      )}
+
+      {/* =====================================================
+          PHOTO VIEWER
+      ===================================================== */}
+
+      {viewPhoto && (
+
+        <div
+          className="photo-viewer-backdrop"
+
+          onClick={() =>
+            setViewPhoto(
+              null
+            )
+          }
+        >
+
+          <div
+            className="photo-viewer"
+
+            onClick={(e) =>
+              e.stopPropagation()
+            }
+          >
+
+            <div className="photo-viewer-header">
+
+              <h3>
+                {
+                  viewPhoto.title
+                }
+              </h3>
+
+              <button
+                type="button"
+
+                className="photo-viewer-close"
+
+                onClick={() =>
+                  setViewPhoto(
+                    null
+                  )
+                }
+              >
+                ×
+              </button>
+
             </div>
 
             <div className="photo-viewer-body">
+
               <img
-                src={viewPhoto.src}
-                alt={viewPhoto.title}
+                src={
+                  viewPhoto.src
+                }
+
+                alt={
+                  viewPhoto.title
+                }
               />
+
             </div>
+
           </div>
+
         </div>
       )}
 

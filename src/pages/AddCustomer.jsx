@@ -1,125 +1,324 @@
-import { useMemo, useState } from "react";
+import { useRef, useState } from "react";
+import { useNavigate } from "react-router";
 
 import {
   getNextCustomerId,
-  getNextLoanId,
   loadCustomers,
   saveCustomers,
 } from "../utils/customerStorage";
 
 import { savePhoto } from "../utils/photoStorage";
 
+const DOCUMENT_TYPES = [
+  "Aadhaar Card",
+  "PAN Card",
+  "Voter ID",
+  "Driving Licence",
+  "Ration Card",
+  "Other",
+];
+
+function createDocumentItem() {
+  return {
+    id: `${Date.now()}-${Math.random()}`,
+    type: "",
+    file: null,
+    preview: "",
+  };
+}
+
 export default function AddCustomer() {
+  const navigate = useNavigate();
+
   const [step, setStep] = useState(1);
-  const [customerId, setCustomerId] = useState(() =>
+
+  const [customerId] = useState(() =>
     getNextCustomerId(loadCustomers())
-  );
-  const [loanId, setLoanId] = useState(() =>
-    getNextLoanId(loadCustomers())
   );
 
   // =========================================================
-  // NEW CUSTOMER DETAILS
+  // OWN APP POPUPS
+  // =========================================================
+
+  const [messagePopup, setMessagePopup] = useState(null);
+
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [savedCustomerId, setSavedCustomerId] = useState("");
+  const [savedCustomerName, setSavedCustomerName] = useState("");
+
+  const [uploadPicker, setUploadPicker] = useState(null);
+
+  const showMessage = (
+    title,
+    message,
+    type = "warning"
+  ) => {
+    setMessagePopup({
+      title,
+      message,
+      type,
+    });
+  };
+
+  const closeMessage = () => {
+    setMessagePopup(null);
+  };
+
+  // =========================================================
+  // CUSTOMER DETAILS
   // =========================================================
 
   const [customerName, setCustomerName] = useState("");
-const [customerMobile, setCustomerMobile] = useState("");
-const [customerFatherName, setCustomerFatherName] = useState("");
-const [customerWork, setCustomerWork] = useState("");
-const [customerDate, setCustomerDate] = useState("");
-const [customerAddress, setCustomerAddress] = useState("");
-const [customerDocumentType, setCustomerDocumentType] = useState("");
+  const [customerMobile, setCustomerMobile] = useState("");
+  const [customerFatherName, setCustomerFatherName] = useState("");
+  const [customerWork, setCustomerWork] = useState("");
+  const [customerAddress, setCustomerAddress] = useState("");
 
   const [customerPhoto, setCustomerPhoto] = useState(null);
   const [customerPhotoPreview, setCustomerPhotoPreview] = useState("");
 
-  const [customerDocument, setCustomerDocument] = useState(null);
-  const [customerDocumentPreview, setCustomerDocumentPreview] = useState("");
+  const [customerDocuments, setCustomerDocuments] = useState([
+    createDocumentItem(),
+  ]);
 
   // =========================================================
   // JAMIN DETAILS
   // =========================================================
 
   const [jaminName, setJaminName] = useState("");
-const [jaminMobile, setJaminMobile] = useState("");
-const [jaminFatherName, setJaminFatherName] = useState("");
-const [jaminWork, setJaminWork] = useState("");
-const [jaminDate, setJaminDate] = useState("");
-const [jaminAddress, setJaminAddress] = useState("");
-const [jaminDocumentType, setJaminDocumentType] = useState("");
+  const [jaminMobile, setJaminMobile] = useState("");
+  const [jaminFatherName, setJaminFatherName] = useState("");
+  const [jaminWork, setJaminWork] = useState("");
+  const [jaminAddress, setJaminAddress] = useState("");
 
   const [jaminPhoto, setJaminPhoto] = useState(null);
   const [jaminPhotoPreview, setJaminPhotoPreview] = useState("");
 
-  const [jaminDocument, setJaminDocument] = useState(null);
-  const [jaminDocumentPreview, setJaminDocumentPreview] = useState("");
+  const [jaminDocuments, setJaminDocuments] = useState([
+    createDocumentItem(),
+  ]);
 
   // =========================================================
-  // LOAN DETAILS
+  // HIDDEN FILE INPUTS
   // =========================================================
 
-  const [cycle, setCycle] = useState("Weekly");
-  const [type, setType] = useState("EMI");
+  const customerPhotoCameraRef = useRef(null);
+  const customerPhotoFilesRef = useRef(null);
 
-  const [amount, setAmount] = useState(10000);
-  const [rate, setRate] = useState(2);
+  const jaminPhotoCameraRef = useRef(null);
+  const jaminPhotoFilesRef = useRef(null);
 
-  // IO duration can be entered manually
-  const [ioDuration, setIoDuration] = useState(10);
+  const customerDocumentCameraRef = useRef(null);
+  const customerDocumentFilesRef = useRef(null);
 
-  // =========================================================
-  // LOAN CALCULATIONS
-  // =========================================================
-
-  const interest = useMemo(() => {
-    return (amount * rate) / 100;
-  }, [amount, rate]);
-  // Daily   = 100 days
-  // Weekly  = 10 weeks
-  // Monthly = 10 months
-  const emiDuration = useMemo(() => {
-    if (cycle === "Daily") return 100;
-    if (cycle === "Weekly") return 10;
-    if (cycle === "Monthly") return 10;
-
-    return 10;
-  }, [cycle]);
-
-  const collection = useMemo(() => {
-    if (type === "IO") {
-      return interest;
-    }
-
-    return amount / emiDuration;
-  }, [type, interest, amount, emiDuration]);
-
-  const amountGiven = useMemo(() => {
-    return amount - interest;
-  }, [amount, interest]);
-
-  const durationUnit =
-    cycle === "Daily"
-      ? "Days"
-      : cycle === "Weekly"
-      ? "Weeks"
-      : "Months";
+  const jaminDocumentCameraRef = useRef(null);
+  const jaminDocumentFilesRef = useRef(null);
 
   // =========================================================
-  // PHOTO / DOCUMENT PREVIEW
+  // FILE / IMAGE HELPERS
   // =========================================================
 
-  const handleImage = (file, setFile, setPreview) => {
+  const readPreview = (file, callback) => {
     if (!file) return;
-
-    setFile(file);
 
     const reader = new FileReader();
 
     reader.onloadend = () => {
-      setPreview(reader.result);
+      callback(reader.result);
     };
 
     reader.readAsDataURL(file);
+  };
+
+  const handleCustomerPhoto = (file) => {
+    if (!file) return;
+
+    setCustomerPhoto(file);
+
+    readPreview(
+      file,
+      setCustomerPhotoPreview
+    );
+
+    setUploadPicker(null);
+  };
+
+  const handleJaminPhoto = (file) => {
+    if (!file) return;
+
+    setJaminPhoto(file);
+
+    readPreview(
+      file,
+      setJaminPhotoPreview
+    );
+
+    setUploadPicker(null);
+  };
+
+  const updateDocumentType = (
+    owner,
+    id,
+    type
+  ) => {
+    const setter =
+      owner === "customer"
+        ? setCustomerDocuments
+        : setJaminDocuments;
+
+    setter((current) =>
+      current.map((doc) =>
+        doc.id === id
+          ? {
+              ...doc,
+              type,
+            }
+          : doc
+      )
+    );
+  };
+
+  const updateDocumentFile = (
+    owner,
+    id,
+    file
+  ) => {
+    if (!file) return;
+
+    const setter =
+      owner === "customer"
+        ? setCustomerDocuments
+        : setJaminDocuments;
+
+    readPreview(file, (preview) => {
+      setter((current) =>
+        current.map((doc) =>
+          doc.id === id
+            ? {
+                ...doc,
+                file,
+                preview,
+              }
+            : doc
+        )
+      );
+    });
+
+    setUploadPicker(null);
+  };
+
+  const addDocument = (owner) => {
+    const setter =
+      owner === "customer"
+        ? setCustomerDocuments
+        : setJaminDocuments;
+
+    setter((current) => [
+      ...current,
+      createDocumentItem(),
+    ]);
+  };
+
+  const removeDocument = (
+    owner,
+    id
+  ) => {
+    const setter =
+      owner === "customer"
+        ? setCustomerDocuments
+        : setJaminDocuments;
+
+    setter((current) => {
+      if (current.length === 1) {
+        return [
+          createDocumentItem(),
+        ];
+      }
+
+      return current.filter(
+        (doc) => doc.id !== id
+      );
+    });
+  };
+
+  const openUploadPicker = (
+    target,
+    documentId = null
+  ) => {
+    setUploadPicker({
+      target,
+      documentId,
+    });
+  };
+
+  const chooseCamera = () => {
+    if (!uploadPicker) return;
+
+    if (
+      uploadPicker.target ===
+      "customerPhoto"
+    ) {
+      customerPhotoCameraRef.current?.click();
+      return;
+    }
+
+    if (
+      uploadPicker.target ===
+      "jaminPhoto"
+    ) {
+      jaminPhotoCameraRef.current?.click();
+      return;
+    }
+
+    if (
+      uploadPicker.target ===
+      "customerDocument"
+    ) {
+      customerDocumentCameraRef.current?.click();
+      return;
+    }
+
+    if (
+      uploadPicker.target ===
+      "jaminDocument"
+    ) {
+      jaminDocumentCameraRef.current?.click();
+    }
+  };
+
+  const chooseFiles = () => {
+    if (!uploadPicker) return;
+
+    if (
+      uploadPicker.target ===
+      "customerPhoto"
+    ) {
+      customerPhotoFilesRef.current?.click();
+      return;
+    }
+
+    if (
+      uploadPicker.target ===
+      "jaminPhoto"
+    ) {
+      jaminPhotoFilesRef.current?.click();
+      return;
+    }
+
+    if (
+      uploadPicker.target ===
+      "customerDocument"
+    ) {
+      customerDocumentFilesRef.current?.click();
+      return;
+    }
+
+    if (
+      uploadPicker.target ===
+      "jaminDocument"
+    ) {
+      jaminDocumentFilesRef.current?.click();
+    }
   };
 
   // =========================================================
@@ -128,36 +327,63 @@ const [jaminDocumentType, setJaminDocumentType] = useState("");
 
   const goToJamin = () => {
     if (!customerName.trim()) {
-      alert("Please enter customer name");
+      showMessage(
+        "Customer Name Required",
+        "Please enter customer name."
+      );
       return;
     }
 
-    if (customerMobile.length !== 10) {
-      alert("Please enter a valid 10 digit customer mobile number");
+    if (
+      customerMobile.length !== 10
+    ) {
+      showMessage(
+        "Invalid Mobile Number",
+        "Please enter a valid 10 digit customer mobile number."
+      );
       return;
     }
 
-    if (!customerFatherName.trim()) {
-      alert("Please enter customer's father name");
+    if (
+      !customerFatherName.trim()
+    ) {
+      showMessage(
+        "Father's Name Required",
+        "Please enter customer's father name."
+      );
       return;
     }
 
     if (!customerWork.trim()) {
-      alert("Please enter customer work");
-      return;
-    }
-    if (!customerDate) {
-  alert("Please select customer date");
-  return;
-}
-
-    if (!customerAddress.trim()) {
-      alert("Please enter customer address");
+      showMessage(
+        "Work Required",
+        "Please enter customer work."
+      );
       return;
     }
 
-    if (!customerDocumentType) {
-      alert("Please select customer document type");
+    if (
+      !customerAddress.trim()
+    ) {
+      showMessage(
+        "Address Required",
+        "Please enter customer address."
+      );
+      return;
+    }
+
+    const incompleteDocument =
+      customerDocuments.find(
+        (doc) =>
+          (doc.type && !doc.file) ||
+          (!doc.type && doc.file)
+      );
+
+    if (incompleteDocument) {
+      showMessage(
+        "Complete Customer Document",
+        "Please select both document type and document photo."
+      );
       return;
     }
 
@@ -165,1044 +391,1079 @@ const [jaminDocumentType, setJaminDocumentType] = useState("");
   };
 
   // =========================================================
-  // JAMIN VALIDATION
+  // SAVE CUSTOMER ONLY
   // =========================================================
 
-  const goToLoan = () => {
+  const handleSaveCustomer = async () => {
     if (!jaminName.trim()) {
-      alert("Please enter Jamin name");
+      showMessage(
+        "Jamin Name Required",
+        "Please enter Jamin name."
+      );
       return;
     }
 
-    if (jaminMobile.length !== 10) {
-      alert("Please enter a valid 10 digit Jamin mobile number");
+    if (
+      jaminMobile.length !== 10
+    ) {
+      showMessage(
+        "Invalid Mobile Number",
+        "Please enter a valid 10 digit Jamin mobile number."
+      );
       return;
     }
 
-    if (!jaminFatherName.trim()) {
-      alert("Please enter Jamin's father name");
+    if (
+      !jaminFatherName.trim()
+    ) {
+      showMessage(
+        "Father's Name Required",
+        "Please enter Jamin's father name."
+      );
       return;
     }
 
     if (!jaminWork.trim()) {
-      alert("Please enter Jamin work");
+      showMessage(
+        "Work Required",
+        "Please enter Jamin work."
+      );
       return;
     }
-    if (!jaminDate) {
-  alert("Please select Jamin date");
-  return;
-}
 
     if (!jaminAddress.trim()) {
-      alert("Please enter Jamin address");
+      showMessage(
+        "Address Required",
+        "Please enter Jamin address."
+      );
       return;
     }
 
-    if (!jaminDocumentType) {
-      alert("Please select Jamin document type");
-      return;
-    }
+    const incompleteDocument =
+      jaminDocuments.find(
+        (doc) =>
+          (doc.type && !doc.file) ||
+          (!doc.type && doc.file)
+      );
 
-    setStep(3);
-  };
-
-  // =========================================================
-  // SAVE CUSTOMER
-  // Frontend only for now
-  // =========================================================
-
-  const handleSave = async () => {
-    if (!amount || amount <= 0) {
-      alert("Please enter a valid loan amount");
-      return;
-    }
-
-    if (rate < 0) {
-      alert("Please enter a valid interest rate");
-      return;
-    }
-
-    if (type === "IO" && (!ioDuration || ioDuration <= 0)) {
-      alert("Please enter valid IO duration");
+    if (incompleteDocument) {
+      showMessage(
+        "Complete Jamin Document",
+        "Please select both document type and document photo."
+      );
       return;
     }
 
     try {
-      const existingCustomers = loadCustomers();
+      const existingCustomers =
+        loadCustomers();
 
-      const newLoan = {
-        loanId,
-        loanAmount: amount,
-        cycle,
-        loanType: type,
-        interestRate: rate,
-        interestAmount: interest,
-        amountGiven,
-        duration: type === "EMI" ? emiDuration : ioDuration,
-        durationUnit,
-        collectionAmount: collection,
+      const validCustomerDocuments =
+        customerDocuments.filter(
+          (doc) =>
+            doc.type &&
+            doc.file
+        );
 
-        // Multi-loan / preclose fields
-        status: "Active",
-        collectedAmount: 0,
-        principalPending: amount,
-        preclosedAt: null,
-        closedAt: null,
-        createdAt: new Date().toISOString(),
-      };
+      const validJaminDocuments =
+        jaminDocuments.filter(
+          (doc) =>
+            doc.type &&
+            doc.file
+        );
 
       const customerData = {
         customer: {
           customerId,
           name: customerName,
           mobile: customerMobile,
-          fatherName: customerFatherName,
+          fatherName:
+            customerFatherName,
           work: customerWork,
-          date: customerDate,
-          address: customerAddress,
-          documentType: customerDocumentType,
+          address:
+            customerAddress,
 
-          // Keep only file names in localStorage.
-          // Actual images will be stored separately when we add profile photo storage.
-          documentPhotoName: customerDocument?.name || "",
-          customerPhotoName: customerPhoto?.name || "",
+          customerPhotoName:
+            customerPhoto?.name ||
+            "",
+
+          // Keep old fields for compatibility
+          documentType:
+            validCustomerDocuments[0]
+              ?.type || "",
+
+          documentPhotoName:
+            validCustomerDocuments[0]
+              ?.file?.name || "",
+
+          // New multiple documents
+          documents:
+            validCustomerDocuments.map(
+              (doc, index) => ({
+                id:
+                  `customer-document-${index + 1}`,
+                type: doc.type,
+                fileName:
+                  doc.file.name,
+                storageKey:
+                  index === 0
+                    ? "customerDocument"
+                    : `customerDocument_${index}`,
+              })
+            ),
         },
 
         jamin: {
           name: jaminName,
           mobile: jaminMobile,
-          fatherName: jaminFatherName,
+          fatherName:
+            jaminFatherName,
           work: jaminWork,
-          date: jaminDate,
-          address: jaminAddress,
-          documentType: jaminDocumentType,
-          documentPhotoName: jaminDocument?.name || "",
-          jaminPhotoName: jaminPhoto?.name || "",
+          address:
+            jaminAddress,
+
+          jaminPhotoName:
+            jaminPhoto?.name ||
+            "",
+
+          // Keep old fields for compatibility
+          documentType:
+            validJaminDocuments[0]
+              ?.type || "",
+
+          documentPhotoName:
+            validJaminDocuments[0]
+              ?.file?.name || "",
+
+          // New multiple documents
+          documents:
+            validJaminDocuments.map(
+              (doc, index) => ({
+                id:
+                  `jamin-document-${index + 1}`,
+                type: doc.type,
+                fileName:
+                  doc.file.name,
+                storageKey:
+                  index === 0
+                    ? "jaminDocument"
+                    : `jaminDocument_${index}`,
+              })
+            ),
         },
 
-        // IMPORTANT: one customer can now have many loans
-        loans: [newLoan],
+        loans: [],
 
         status: "Active",
-        createdAt: new Date().toISOString(),
+
+        createdAt:
+          new Date().toISOString(),
       };
 
-      const updatedCustomers = [...existingCustomers, customerData];
-      saveCustomers(updatedCustomers);
-      // =======================================
-// SAVE CUSTOMER / JAMIN PHOTOS
-// =======================================
+      const updatedCustomers = [
+        ...existingCustomers,
+        customerData,
+      ];
 
-await Promise.all([
-  customerPhoto
-    ? savePhoto(
-        customerId,
-        "customerPhoto",
-        customerPhoto
-      )
-    : Promise.resolve(),
-
-  customerDocument
-    ? savePhoto(
-        customerId,
-        "customerDocument",
-        customerDocument
-      )
-    : Promise.resolve(),
-
-  jaminPhoto
-    ? savePhoto(
-        customerId,
-        "jaminPhoto",
-        jaminPhoto
-      )
-    : Promise.resolve(),
-
-  jaminDocument
-    ? savePhoto(
-        customerId,
-        "jaminDocument",
-        jaminDocument
-      )
-    : Promise.resolve(),
-]);
-
-      console.log("CUSTOMER SAVED:", customerData);
-
-      alert(
-        `Customer saved successfully!\n\nCustomer ID: ${customerId}\nLoan ID: ${loanId}`
+      saveCustomers(
+        updatedCustomers
       );
 
-      // Reset customer
-      setCustomerName("");
-      setCustomerMobile("");
-      setCustomerFatherName("");
-      setCustomerWork("");
-      setCustomerDate("");
-      setCustomerAddress("");
-      setCustomerDocumentType("");
-      setCustomerPhoto(null);
-      setCustomerPhotoPreview("");
-      setCustomerDocument(null);
-      setCustomerDocumentPreview("");
+      const photoSaveTasks = [];
 
-      // Reset Jamin
-      setJaminName("");
-      setJaminMobile("");
-      setJaminFatherName("");
-      setJaminWork("");
-      setJaminDate("");
-      setJaminAddress("");
-      setJaminDocumentType("");
-      setJaminPhoto(null);
-      setJaminPhotoPreview("");
-      setJaminDocument(null);
-      setJaminDocumentPreview("");
+      if (customerPhoto) {
+        photoSaveTasks.push(
+          savePhoto(
+            customerId,
+            "customerPhoto",
+            customerPhoto
+          )
+        );
+      }
 
-      // Reset loan
-      setAmount(10000);
-      setRate(2);
-      setCycle("Weekly");
-      setType("EMI");
-      setIoDuration(10);
+      if (jaminPhoto) {
+        photoSaveTasks.push(
+          savePhoto(
+            customerId,
+            "jaminPhoto",
+            jaminPhoto
+          )
+        );
+      }
 
-      // Generate IDs for the next new customer/loan
-      setCustomerId(getNextCustomerId(updatedCustomers));
-      setLoanId(getNextLoanId(updatedCustomers));
+      validCustomerDocuments.forEach(
+        (doc, index) => {
+          photoSaveTasks.push(
+            savePhoto(
+              customerId,
+              index === 0
+                ? "customerDocument"
+                : `customerDocument_${index}`,
+              doc.file
+            )
+          );
+        }
+      );
 
-      setStep(1);
+      validJaminDocuments.forEach(
+        (doc, index) => {
+          photoSaveTasks.push(
+            savePhoto(
+              customerId,
+              index === 0
+                ? "jaminDocument"
+                : `jaminDocument_${index}`,
+              doc.file
+            )
+          );
+        }
+      );
+
+      await Promise.all(
+        photoSaveTasks
+      );
+
+      setSavedCustomerId(
+        customerId
+      );
+
+      setSavedCustomerName(
+        customerName
+      );
+
+      setShowSuccess(true);
     } catch (error) {
-      console.error("SAVE CUSTOMER ERROR:", error);
-      alert("Unable to save customer. Check the browser console for the error.");
+      console.error(
+        "SAVE CUSTOMER ERROR:",
+        error
+      );
+
+      showMessage(
+        "Unable to Save Customer",
+        "Something went wrong while saving the customer. Please try again.",
+        "error"
+      );
     }
   };
 
+  // =========================================================
+  // AFTER SUCCESS
+  // =========================================================
+
+  const goToCustomerProfile =
+    () => {
+      setShowSuccess(false);
+
+      navigate(
+        `/customers/profile/${savedCustomerId}`
+      );
+    };
+
+  const goToAddLoan = () => {
+    setShowSuccess(false);
+
+    navigate(
+      `/customers/${savedCustomerId}/add-loan`
+    );
+  };
+
+  // =========================================================
+  // DOCUMENT UI
+  // =========================================================
+
+  const renderDocuments = (
+    owner,
+    documents
+  ) => (
+    <div className="multi-document-section">
+
+      <div className="multi-document-heading">
+        <div>
+          <h3>Documents</h3>
+          <p>
+            Add one or more customer documents.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          className="add-document-button"
+          onClick={() =>
+            addDocument(owner)
+          }
+        >
+          + Document
+        </button>
+      </div>
+
+      <div className="document-list">
+        {documents.map(
+          (doc, index) => (
+            <div
+              className="document-entry-card"
+              key={doc.id}
+            >
+              <div className="document-entry-header">
+                <strong>
+                  Document {index + 1}
+                </strong>
+
+                <button
+                  type="button"
+                  className="remove-document-button"
+                  onClick={() =>
+                    removeDocument(
+                      owner,
+                      doc.id
+                    )
+                  }
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="document-entry-grid">
+
+                <div className="form-field">
+                  <label>
+                    Document Type
+                  </label>
+
+                  <select
+                    value={doc.type}
+                    onChange={(e) =>
+                      updateDocumentType(
+                        owner,
+                        doc.id,
+                        e.target.value
+                      )
+                    }
+                  >
+                    <option value="">
+                      Select document type
+                    </option>
+
+                    {DOCUMENT_TYPES.map(
+                      (type) => (
+                        <option
+                          value={type}
+                          key={type}
+                        >
+                          {type}
+                        </option>
+                      )
+                    )}
+                  </select>
+                </div>
+
+                <div className="form-field">
+                  <label>
+                    Document Photo
+                  </label>
+
+                  <button
+                    type="button"
+                    className="document-upload-button"
+                    onClick={() =>
+                      openUploadPicker(
+                        owner === "customer"
+                          ? "customerDocument"
+                          : "jaminDocument",
+                        doc.id
+                      )
+                    }
+                  >
+                    {doc.preview
+                      ? "Change Document"
+                      : "+ Document"}
+                  </button>
+
+                  {doc.preview && (
+                    <div className="document-preview-small">
+                      <img
+                        src={doc.preview}
+                        alt={`${owner} document`}
+                      />
+
+                      <span>
+                        {doc.file?.name}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+              </div>
+            </div>
+          )
+        )}
+      </div>
+
+    </div>
+  );
+
   return (
-    <section className="panel add-customer-panel">
+    <>
+      <section className="panel add-customer-panel">
 
-      {/* =====================================================
-          PAGE HEADER
-      ===================================================== */}
+        <div className="add-customer-header">
+          <h1>New Customer</h1>
 
-      <div className="add-customer-header">
-        <h1>New Customer</h1>
-        <p>Enter customer, Jamin and loan details</p>
-      </div>
-
-      {/* =====================================================
-          STEP INDICATOR
-      ===================================================== */}
-
-      <div className="customer-steps">
-
-        <div
-          className={
-            step >= 1
-              ? "customer-step active"
-              : "customer-step"
-          }
-        >
-          <span>1</span>
-          <b>New Customer</b>
+          <p>
+            Create customer profile first. Loan can be added after customer creation.
+          </p>
         </div>
 
-        <div className="step-line"></div>
+        <div className="customer-steps">
 
-        <div
-          className={
-            step >= 2
-              ? "customer-step active"
-              : "customer-step"
-          }
-        >
-          <span>2</span>
-          <b>Jamin Details</b>
+          <div
+            className={
+              step >= 1
+                ? "customer-step active"
+                : "customer-step"
+            }
+          >
+            <span>1</span>
+            <b>Customer Details</b>
+          </div>
+
+          <div className="step-line" />
+
+          <div
+            className={
+              step >= 2
+                ? "customer-step active"
+                : "customer-step"
+            }
+          >
+            <span>2</span>
+            <b>Jamin Details</b>
+          </div>
+
         </div>
 
-        <div className="step-line"></div>
+        {/* =====================================================
+            STEP 1 - CUSTOMER
+        ===================================================== */}
 
-        <div
-          className={
-            step >= 3
-              ? "customer-step active"
-              : "customer-step"
-          }
-        >
-          <span>3</span>
-          <b>Loan Details</b>
-        </div>
-
-      </div>
-
-      {/* =====================================================
-          STEP 1
-          NEW CUSTOMER
-      ===================================================== */}
-
-      {step === 1 && (
-        <>
-          <div className="form-section-title">
-            New Customer Details
-          </div>
-
-          <div className="customer-form">
-
-            {/* NAME */}
-
-            <div className="form-field">
-              <label>Customer Name *</label>
-
-              <input
-                type="text"
-                placeholder="Enter customer name"
-                value={customerName}
-                onChange={(e) =>
-                  setCustomerName(e.target.value)
-                }
-              />
+        {step === 1 && (
+          <>
+            <div className="form-section-title">
+              Customer Details
             </div>
 
-            {/* CUSTOMER ID */}
+            <div className="customer-form">
 
-            <div className="form-field">
-              <label>Customer ID</label>
-
-              <input
-                value={customerId}
-                readOnly
-              />
-            </div>
-
-            {/* MOBILE */}
-
-            <div className="form-field">
-              <label>Mobile Number *</label>
-
-              <input
-                type="tel"
-                placeholder="Enter 10 digit mobile number"
-                maxLength="10"
-                value={customerMobile}
-                onChange={(e) => {
-                  const value =
-                    e.target.value.replace(/\D/g, "");
-
-                  setCustomerMobile(value);
-                }}
-              />
-            </div>
-
-            {/* FATHER NAME */}
-
-            <div className="form-field">
-              <label>Father's Name *</label>
-
-              <input
-                type="text"
-                placeholder="Enter father's name"
-                value={customerFatherName}
-                onChange={(e) =>
-                  setCustomerFatherName(e.target.value)
-                }
-              />
-            </div>
-
-            {/* WORK */}
-
-            <div className="form-field">
-              <label>Work *</label>
-
-              <input
-                type="text"
-                placeholder="Enter occupation / work"
-                value={customerWork}
-                onChange={(e) =>
-                  setCustomerWork(e.target.value)
-                }
-              />
-            </div>
-            <div className="form-field">
-  <label>Date *</label>
-
-  <input
-    type="date"
-    value={customerDate}
-    onChange={(e) =>
-      setCustomerDate(e.target.value)
-    }
-  />
-</div>
-
-            {/* DOCUMENT TYPE */}
-
-            <div className="form-field">
-              <label>Document Type *</label>
-
-              <select
-                value={customerDocumentType}
-                onChange={(e) =>
-                  setCustomerDocumentType(e.target.value)
-                }
-              >
-                <option value="">
-                  Select document type
-                </option>
-
-                <option value="Aadhaar Card">
-                  Aadhaar Card
-                </option>
-
-                <option value="PAN Card">
-                  PAN Card
-                </option>
-
-                <option value="Voter ID">
-                  Voter ID
-                </option>
-
-                <option value="Driving Licence">
-                  Driving Licence
-                </option>
-
-                <option value="Ration Card">
-                  Ration Card
-                </option>
-
-                <option value="Other">
-                  Other
-                </option>
-
-              </select>
-            </div>
-
-            {/* ADDRESS */}
-
-            <div className="form-field full-width-field">
-              <label>Address *</label>
-
-              <textarea
-                placeholder="Enter full customer address"
-                value={customerAddress}
-                onChange={(e) =>
-                  setCustomerAddress(e.target.value)
-                }
-              />
-            </div>
-
-            {/* CUSTOMER PHOTO */}
-
-            <div className="form-field">
-
-              <label>Customer Photo</label>
-
-              <label className="photo-upload-box">
-
-                {customerPhotoPreview ? (
-                  <img
-                    src={customerPhotoPreview}
-                    alt="Customer"
-                  />
-                ) : (
-                  <div className="upload-placeholder">
-
-                    <strong>
-                      + Upload Customer Photo
-                    </strong>
-
-                    <small>
-                      JPG / PNG
-                    </small>
-
-                  </div>
-                )}
-
-                <input
-                  type="file"
-                  accept="image/*"
-                  hidden
-                  onChange={(e) =>
-                    handleImage(
-                      e.target.files[0],
-                      setCustomerPhoto,
-                      setCustomerPhotoPreview
-                    )
-                  }
-                />
-
-              </label>
-
-            </div>
-
-            {/* DOCUMENT PHOTO */}
-
-            <div className="form-field">
-
-              <label>Document Photo</label>
-
-              <label className="photo-upload-box">
-
-                {customerDocumentPreview ? (
-                  <img
-                    src={customerDocumentPreview}
-                    alt="Customer Document"
-                  />
-                ) : (
-                  <div className="upload-placeholder">
-
-                    <strong>
-                      + Upload Document Photo
-                    </strong>
-
-                    <small>
-                      {customerDocumentType ||
-                        "Aadhaar / ID Document"}
-                    </small>
-
-                  </div>
-                )}
-
-                <input
-                  type="file"
-                  accept="image/*"
-                  hidden
-                  onChange={(e) =>
-                    handleImage(
-                      e.target.files[0],
-                      setCustomerDocument,
-                      setCustomerDocumentPreview
-                    )
-                  }
-                />
-
-              </label>
-
-            </div>
-
-          </div>
-
-          <div className="customer-actions">
-
-            <button
-              type="button"
-              className="primary save-customer-button"
-              onClick={goToJamin}
-            >
-              Next: Jamin Details →
-            </button>
-
-          </div>
-        </>
-      )}
-
-      {/* =====================================================
-          STEP 2
-          JAMIN
-      ===================================================== */}
-
-      {step === 2 && (
-        <>
-          <div className="form-section-title">
-            Jamin Details
-          </div>
-
-          <div className="customer-form">
-
-            {/* JAMIN NAME */}
-
-            <div className="form-field">
-              <label>Jamin Name *</label>
-
-              <input
-                type="text"
-                placeholder="Enter Jamin name"
-                value={jaminName}
-                onChange={(e) =>
-                  setJaminName(e.target.value)
-                }
-              />
-            </div>
-
-            {/* MOBILE */}
-
-            <div className="form-field">
-              <label>Mobile Number *</label>
-
-              <input
-                type="tel"
-                placeholder="Enter 10 digit mobile number"
-                maxLength="10"
-                value={jaminMobile}
-                onChange={(e) => {
-                  const value =
-                    e.target.value.replace(/\D/g, "");
-
-                  setJaminMobile(value);
-                }}
-              />
-            </div>
-
-            {/* FATHER NAME */}
-
-            <div className="form-field">
-              <label>Father's Name *</label>
-
-              <input
-                type="text"
-                placeholder="Enter father's name"
-                value={jaminFatherName}
-                onChange={(e) =>
-                  setJaminFatherName(e.target.value)
-                }
-              />
-            </div>
-
-            {/* WORK */}
-
-            <div className="form-field">
-              <label>Work *</label>
-
-              <input
-                type="text"
-                placeholder="Enter occupation / work"
-                value={jaminWork}
-                onChange={(e) =>
-                  setJaminWork(e.target.value)
-                }
-              />
-            </div>
-            <div className="form-field">
-  <label>Date *</label>
-
-  <input
-    type="date"
-    value={jaminDate}
-    onChange={(e) =>
-      setJaminDate(e.target.value)
-    }
-  />
-</div>
-
-            {/* DOCUMENT TYPE */}
-
-            <div className="form-field">
-              <label>Document Type *</label>
-
-              <select
-                value={jaminDocumentType}
-                onChange={(e) =>
-                  setJaminDocumentType(e.target.value)
-                }
-              >
-                <option value="">
-                  Select document type
-                </option>
-
-                <option value="Aadhaar Card">
-                  Aadhaar Card
-                </option>
-
-                <option value="PAN Card">
-                  PAN Card
-                </option>
-
-                <option value="Voter ID">
-                  Voter ID
-                </option>
-
-                <option value="Driving Licence">
-                  Driving Licence
-                </option>
-
-                <option value="Ration Card">
-                  Ration Card
-                </option>
-
-                <option value="Other">
-                  Other
-                </option>
-
-              </select>
-            </div>
-
-            {/* ADDRESS */}
-
-            <div className="form-field full-width-field">
-              <label>Address *</label>
-
-              <textarea
-                placeholder="Enter full Jamin address"
-                value={jaminAddress}
-                onChange={(e) =>
-                  setJaminAddress(e.target.value)
-                }
-              />
-            </div>
-
-            {/* JAMIN PHOTO */}
-
-            <div className="form-field">
-
-              <label>Jamin Photo</label>
-
-              <label className="photo-upload-box">
-
-                {jaminPhotoPreview ? (
-                  <img
-                    src={jaminPhotoPreview}
-                    alt="Jamin"
-                  />
-                ) : (
-                  <div className="upload-placeholder">
-
-                    <strong>
-                      + Upload Jamin Photo
-                    </strong>
-
-                    <small>
-                      JPG / PNG
-                    </small>
-
-                  </div>
-                )}
-
-                <input
-                  type="file"
-                  accept="image/*"
-                  hidden
-                  onChange={(e) =>
-                    handleImage(
-                      e.target.files[0],
-                      setJaminPhoto,
-                      setJaminPhotoPreview
-                    )
-                  }
-                />
-
-              </label>
-
-            </div>
-
-            {/* JAMIN DOCUMENT */}
-
-            <div className="form-field">
-
-              <label>Document Photo</label>
-
-              <label className="photo-upload-box">
-
-                {jaminDocumentPreview ? (
-                  <img
-                    src={jaminDocumentPreview}
-                    alt="Jamin Document"
-                  />
-                ) : (
-                  <div className="upload-placeholder">
-
-                    <strong>
-                      + Upload Document Photo
-                    </strong>
-
-                    <small>
-                      {jaminDocumentType ||
-                        "Aadhaar / ID Document"}
-                    </small>
-
-                  </div>
-                )}
-
-                <input
-                  type="file"
-                  accept="image/*"
-                  hidden
-                  onChange={(e) =>
-                    handleImage(
-                      e.target.files[0],
-                      setJaminDocument,
-                      setJaminDocumentPreview
-                    )
-                  }
-                />
-
-              </label>
-
-            </div>
-
-          </div>
-
-          <div className="customer-actions">
-
-            <button
-              type="button"
-              className="cancel-button"
-              onClick={() => setStep(1)}
-            >
-              ← Back
-            </button>
-
-            <button
-              type="button"
-              className="primary save-customer-button"
-              onClick={goToLoan}
-            >
-              Next: Loan Details →
-            </button>
-
-          </div>
-        </>
-      )}
-
-      {/* =====================================================
-          STEP 3
-          LOAN DETAILS
-      ===================================================== */}
-
-      {step === 3 && (
-        <>
-          <div className="form-section-title">
-            Loan Details
-          </div>
-
-          <div className="customer-form">
-
-            {/* LOAN ID */}
-
-            <div className="form-field">
-              <label>Loan ID</label>
-
-              <input
-                value={loanId}
-                readOnly
-              />
-            </div>
-
-            {/* LOAN AMOUNT */}
-
-            <div className="form-field">
-              <label>Loan Amount *</label>
-
-              <input
-                type="number"
-                min="1"
-                value={amount}
-                onChange={(e) =>
-                  setAmount(Number(e.target.value))
-                }
-              />
-            </div>
-
-            {/* CYCLE */}
-
-            <div className="form-field">
-              <label>Collection Cycle *</label>
-
-              <div className="choices">
-
-                {[
-                  "Daily",
-                  "Weekly",
-                  "Monthly",
-                ].map((x) => (
-                  <button
-                    type="button"
-                    key={x}
-                    className={
-                      cycle === x ? "active" : ""
-                    }
-                    onClick={() =>
-                      setCycle(x)
-                    }
-                  >
-                    {x}
-                  </button>
-                ))}
-
-              </div>
-            </div>
-
-            {/* LOAN TYPE */}
-
-            <div className="form-field">
-              <label>Loan Type *</label>
-
-              <div className="choices">
-
-                {["EMI", "IO"].map((x) => (
-                  <button
-                    type="button"
-                    key={x}
-                    className={
-                      type === x ? "active" : ""
-                    }
-                    onClick={() =>
-                      setType(x)
-                    }
-                  >
-                    {x}
-                  </button>
-                ))}
-
-              </div>
-            </div>
-
-            {/* INTEREST RATE */}
-
-            <div className="form-field">
-              <label>Interest Rate % *</label>
-
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={rate}
-                onChange={(e) =>
-                  setRate(Number(e.target.value))
-                }
-              />
-            </div>
-
-            {/* INTEREST AMOUNT */}
-
-            <div className="form-field">
-              <label>Interest Amount</label>
-
-              <input
-                value={
-                  "₹" +
-                  interest.toLocaleString(
-                    "en-IN"
-                  )
-                }
-                readOnly
-              />
-            </div>
-
-            {/* AMOUNT GIVEN */}
-
-            <div className="form-field">
-              <label>Amount Given</label>
-
-              <input
-                value={
-                  "₹" +
-                  amountGiven.toLocaleString(
-                    "en-IN"
-                  )
-                }
-                readOnly
-              />
-            </div>
-
-            {/* EMI DURATION */}
-
-            {type === "EMI" && (
               <div className="form-field">
-
                 <label>
-                  Duration
+                  Customer Name *
                 </label>
 
                 <input
-                  value={`${emiDuration} ${durationUnit}`}
+                  type="text"
+                  placeholder="Enter customer name"
+                  value={customerName}
+                  onChange={(e) =>
+                    setCustomerName(
+                      e.target.value
+                    )
+                  }
+                />
+              </div>
+
+              <div className="form-field">
+                <label>
+                  Customer ID
+                </label>
+
+                <input
+                  value={customerId}
                   readOnly
                 />
-
               </div>
-            )}
 
-            {/* IO DURATION */}
-
-            {type === "IO" && (
               <div className="form-field">
-
                 <label>
-                  IO Duration ({durationUnit}) *
+                  Mobile Number *
                 </label>
 
                 <input
-                  type="number"
-                  min="1"
-                  value={ioDuration}
+                  type="tel"
+                  placeholder="Enter 10 digit mobile number"
+                  maxLength="10"
+                  value={customerMobile}
                   onChange={(e) =>
-                    setIoDuration(
-                      Number(e.target.value)
+                    setCustomerMobile(
+                      e.target.value.replace(
+                        /\D/g,
+                        ""
+                      )
                     )
                   }
                 />
-
               </div>
-            )}
 
-            {/* COLLECTION AMOUNT */}
+              <div className="form-field">
+                <label>
+                  Father's Name *
+                </label>
 
-            <div className="form-field">
-              <label>
-                {type === "IO"
-                  ? `Interest Collection / ${cycle}`
-                  : `${cycle} Collection Amount`}
-              </label>
+                <input
+                  type="text"
+                  placeholder="Enter father's name"
+                  value={customerFatherName}
+                  onChange={(e) =>
+                    setCustomerFatherName(
+                      e.target.value
+                    )
+                  }
+                />
+              </div>
 
-              <input
-                value={
-                  "₹" +
-                  collection.toLocaleString(
-                    "en-IN",
-                    {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    }
-                  )
-                }
-                readOnly
-              />
+              <div className="form-field">
+                <label>
+                  Work *
+                </label>
+
+                <input
+                  type="text"
+                  placeholder="Enter occupation / work"
+                  value={customerWork}
+                  onChange={(e) =>
+                    setCustomerWork(
+                      e.target.value
+                    )
+                  }
+                />
+              </div>
+
+              <div className="form-field full-width-field">
+                <label>
+                  Address *
+                </label>
+
+                <textarea
+                  placeholder="Enter full customer address"
+                  value={customerAddress}
+                  onChange={(e) =>
+                    setCustomerAddress(
+                      e.target.value
+                    )
+                  }
+                />
+              </div>
+
+              <div className="form-field full-width-field">
+                <label>
+                  Customer Photo
+                </label>
+
+                <button
+                  type="button"
+                  className="single-photo-upload"
+                  onClick={() =>
+                    openUploadPicker(
+                      "customerPhoto"
+                    )
+                  }
+                >
+                  {customerPhotoPreview ? (
+                    <img
+                      src={customerPhotoPreview}
+                      alt="Customer"
+                    />
+                  ) : (
+                    <div className="upload-placeholder">
+                      <strong>
+                        + Customer Photo
+                      </strong>
+
+                      <small>
+                        Camera or Files
+                      </small>
+                    </div>
+                  )}
+                </button>
+              </div>
+
             </div>
 
-            {/* IO PRINCIPAL */}
+            {renderDocuments(
+              "customer",
+              customerDocuments
+            )}
 
-            {type === "IO" && (
+            <div className="customer-actions">
+              <button
+                type="button"
+                className="primary save-customer-button"
+                onClick={goToJamin}
+              >
+                Next: Jamin Details →
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* =====================================================
+            STEP 2 - JAMIN
+        ===================================================== */}
+
+        {step === 2 && (
+          <>
+            <div className="form-section-title">
+              Jamin Details
+            </div>
+
+            <div className="customer-form">
+
               <div className="form-field">
-
                 <label>
-                  Principal Amount Pending
+                  Jamin Name *
                 </label>
 
                 <input
-                  value={
-                    "₹" +
-                    amount.toLocaleString(
-                      "en-IN"
+                  type="text"
+                  placeholder="Enter Jamin name"
+                  value={jaminName}
+                  onChange={(e) =>
+                    setJaminName(
+                      e.target.value
                     )
                   }
-                  readOnly
                 />
-
               </div>
+
+              <div className="form-field">
+                <label>
+                  Mobile Number *
+                </label>
+
+                <input
+                  type="tel"
+                  placeholder="Enter 10 digit mobile number"
+                  maxLength="10"
+                  value={jaminMobile}
+                  onChange={(e) =>
+                    setJaminMobile(
+                      e.target.value.replace(
+                        /\D/g,
+                        ""
+                      )
+                    )
+                  }
+                />
+              </div>
+
+              <div className="form-field">
+                <label>
+                  Father's Name *
+                </label>
+
+                <input
+                  type="text"
+                  placeholder="Enter father's name"
+                  value={jaminFatherName}
+                  onChange={(e) =>
+                    setJaminFatherName(
+                      e.target.value
+                    )
+                  }
+                />
+              </div>
+
+              <div className="form-field">
+                <label>
+                  Work *
+                </label>
+
+                <input
+                  type="text"
+                  placeholder="Enter occupation / work"
+                  value={jaminWork}
+                  onChange={(e) =>
+                    setJaminWork(
+                      e.target.value
+                    )
+                  }
+                />
+              </div>
+
+              <div className="form-field full-width-field">
+                <label>
+                  Address *
+                </label>
+
+                <textarea
+                  placeholder="Enter full Jamin address"
+                  value={jaminAddress}
+                  onChange={(e) =>
+                    setJaminAddress(
+                      e.target.value
+                    )
+                  }
+                />
+              </div>
+
+              <div className="form-field full-width-field">
+                <label>
+                  Jamin Photo
+                </label>
+
+                <button
+                  type="button"
+                  className="single-photo-upload"
+                  onClick={() =>
+                    openUploadPicker(
+                      "jaminPhoto"
+                    )
+                  }
+                >
+                  {jaminPhotoPreview ? (
+                    <img
+                      src={jaminPhotoPreview}
+                      alt="Jamin"
+                    />
+                  ) : (
+                    <div className="upload-placeholder">
+                      <strong>
+                        + Jamin Photo
+                      </strong>
+
+                      <small>
+                        Camera or Files
+                      </small>
+                    </div>
+                  )}
+                </button>
+              </div>
+
+            </div>
+
+            {renderDocuments(
+              "jamin",
+              jaminDocuments
             )}
 
-          </div>
+            <div className="customer-actions">
 
-          <div className="customer-actions">
+              <button
+                type="button"
+                className="cancel-button"
+                onClick={() =>
+                  setStep(1)
+                }
+              >
+                ← Back
+              </button>
+
+              <button
+                type="button"
+                className="primary save-customer-button"
+                onClick={
+                  handleSaveCustomer
+                }
+              >
+                Create Customer Profile
+              </button>
+
+            </div>
+          </>
+        )}
+
+      </section>
+
+      {/* =====================================================
+          HIDDEN INPUTS
+      ===================================================== */}
+
+      <input
+        ref={customerPhotoCameraRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        hidden
+        onChange={(e) =>
+          handleCustomerPhoto(
+            e.target.files?.[0]
+          )
+        }
+      />
+
+      <input
+        ref={customerPhotoFilesRef}
+        type="file"
+        accept="image/*"
+        hidden
+        onChange={(e) =>
+          handleCustomerPhoto(
+            e.target.files?.[0]
+          )
+        }
+      />
+
+      <input
+        ref={jaminPhotoCameraRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        hidden
+        onChange={(e) =>
+          handleJaminPhoto(
+            e.target.files?.[0]
+          )
+        }
+      />
+
+      <input
+        ref={jaminPhotoFilesRef}
+        type="file"
+        accept="image/*"
+        hidden
+        onChange={(e) =>
+          handleJaminPhoto(
+            e.target.files?.[0]
+          )
+        }
+      />
+
+      <input
+        ref={customerDocumentCameraRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        hidden
+        onChange={(e) =>
+          updateDocumentFile(
+            "customer",
+            uploadPicker?.documentId,
+            e.target.files?.[0]
+          )
+        }
+      />
+
+      <input
+        ref={customerDocumentFilesRef}
+        type="file"
+        accept="image/*"
+        hidden
+        onChange={(e) =>
+          updateDocumentFile(
+            "customer",
+            uploadPicker?.documentId,
+            e.target.files?.[0]
+          )
+        }
+      />
+
+      <input
+        ref={jaminDocumentCameraRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        hidden
+        onChange={(e) =>
+          updateDocumentFile(
+            "jamin",
+            uploadPicker?.documentId,
+            e.target.files?.[0]
+          )
+        }
+      />
+
+      <input
+        ref={jaminDocumentFilesRef}
+        type="file"
+        accept="image/*"
+        hidden
+        onChange={(e) =>
+          updateDocumentFile(
+            "jamin",
+            uploadPicker?.documentId,
+            e.target.files?.[0]
+          )
+        }
+      />
+
+      {/* =====================================================
+          CAMERA / FILE PICKER POPUP
+      ===================================================== */}
+
+      {uploadPicker && (
+        <div
+          className="app-modal-backdrop"
+          onClick={() =>
+            setUploadPicker(null)
+          }
+        >
+          <div
+            className="app-modal upload-source-modal"
+            onClick={(e) =>
+              e.stopPropagation()
+            }
+          >
+            <div className="app-modal-icon blue">
+              +
+            </div>
+
+            <h2>
+              Choose Upload Method
+            </h2>
+
+            <p>
+              Take a new photo or choose an existing image from your device.
+            </p>
+
+            <div className="upload-source-actions">
+
+              <button
+                type="button"
+                className="upload-source-button"
+                onClick={chooseCamera}
+              >
+                <span className="upload-source-symbol">
+                  📷
+                </span>
+
+                <strong>
+                  Camera
+                </strong>
+
+                <small>
+                  Take a new photo
+                </small>
+              </button>
+
+              <button
+                type="button"
+                className="upload-source-button"
+                onClick={chooseFiles}
+              >
+                <span className="upload-source-symbol">
+                  📁
+                </span>
+
+                <strong>
+                  Files
+                </strong>
+
+                <small>
+                  Choose from device
+                </small>
+              </button>
+
+            </div>
 
             <button
               type="button"
-              className="cancel-button"
-              onClick={() => setStep(2)}
+              className="cancel-button app-modal-cancel"
+              onClick={() =>
+                setUploadPicker(null)
+              }
             >
-              ← Back
-            </button>
-
-            <button
-              type="button"
-              className="primary save-customer-button"
-              onClick={handleSave}
-            >
-              Save Customer
+              Cancel
             </button>
 
           </div>
-
-        </>
+        </div>
       )}
 
-    </section>
+      {/* =====================================================
+          VALIDATION / ERROR POPUP
+      ===================================================== */}
+
+      {messagePopup && (
+        <div
+          className="app-modal-backdrop"
+          onClick={closeMessage}
+        >
+          <div
+            className="app-modal message-modal"
+            onClick={(e) =>
+              e.stopPropagation()
+            }
+          >
+            <div
+              className={`app-modal-icon ${messagePopup.type}`}
+            >
+              {messagePopup.type === "error"
+                ? "×"
+                : "!"}
+            </div>
+
+            <h2>
+              {messagePopup.title}
+            </h2>
+
+            <p>
+              {messagePopup.message}
+            </p>
+
+            <button
+              type="button"
+              className="primary app-modal-full-button"
+              onClick={closeMessage}
+            >
+              OK
+            </button>
+
+          </div>
+        </div>
+      )}
+
+      {/* =====================================================
+          SUCCESS POPUP
+      ===================================================== */}
+
+      {showSuccess && (
+        <div className="app-modal-backdrop">
+
+          <div className="app-modal customer-success-modal">
+
+            <div className="app-modal-icon success">
+              ✓
+            </div>
+
+            <h2>
+              Customer Profile Created
+            </h2>
+
+            <p>
+              {savedCustomerName} has been added successfully.
+            </p>
+
+            <div className="customer-success-details">
+              <span>
+                Customer ID
+              </span>
+
+              <strong>
+                {savedCustomerId}
+              </strong>
+            </div>
+
+            <button
+              type="button"
+              className="primary app-modal-full-button"
+              onClick={goToAddLoan}
+            >
+              + Add Loan
+            </button>
+
+            <button
+              type="button"
+              className="cancel-button app-modal-full-button"
+              onClick={
+                goToCustomerProfile
+              }
+            >
+              View Customer Profile
+            </button>
+
+          </div>
+
+        </div>
+      )}
+
+    </>
   );
 }
