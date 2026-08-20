@@ -1,0 +1,9 @@
+Fin Capital Professional UI update
+
+Use src/styles/professional.css as the single extra style file for the whole app.
+Expenses.jsx no longer imports a page-local CSS file.
+GlobalAlert.jsx converts existing alert(...) calls into Fin Capital in-app dialogs.
+Login.jsx stores temporary Owner/Agent profile identity for automatic Expense Agent Used.
+
+Run: npm.cmd run dev -- --host
+Build: npm.cmd run build

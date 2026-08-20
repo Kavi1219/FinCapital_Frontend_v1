@@ -1,0 +1,756 @@
+/* =========================================
+   ADD CUSTOMER PAGE
+========================================= */
+.add-customer-panel {
+  max-width: 950px;
+  margin: 28px auto;
+  padding: 28px;
+}
+
+/* Header */
+.add-customer-header {
+  margin-bottom: 28px;
+}
+
+.add-customer-header h1 {
+  margin: 0;
+  font-size: 28px;
+  color: #172033;
+}
+
+.add-customer-header p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* Main form */
+.customer-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px 24px;
+}
+
+/* Individual field */
+.form-field {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-field label {
+  margin-bottom: 7px;
+  font-size: 12px;
+  font-weight: 800;
+  color: #526078;
+}
+
+/* Inputs */
+.form-field input,
+.form-field textarea {
+  width: 100%;
+  border: 1px solid #d4dce8;
+  border-radius: 9px;
+  padding: 12px 13px;
+  background: white;
+  color: #172033;
+  outline: none;
+  transition: 0.2s;
+}
+
+.form-field input {
+  height: 46px;
+}
+
+.form-field textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
+/* Focus */
+.form-field input:focus,
+.form-field textarea:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.10);
+}
+
+/* Read-only fields */
+.form-field input[readonly] {
+  background: #f3f6fa;
+  color: #5c6879;
+}
+
+/* Address full width */
+.full-width-field {
+  grid-column: 1 / -1;
+}
+
+/* Choices */
+.add-customer-panel .choices {
+  display: flex;
+  gap: 8px;
+  margin: 0;
+  min-height: 46px;
+  align-items: center;
+}
+
+.add-customer-panel .choices button {
+  border: 1px solid var(--line);
+  background: #f7f9fc;
+  border-radius: 9px;
+  padding: 10px 16px;
+  font-weight: 800;
+  color: #172033;
+}
+
+.add-customer-panel .choices button:hover {
+  border-color: var(--blue);
+  color: var(--blue);
+}
+
+.add-customer-panel .choices button.active {
+  border-color: var(--blue);
+  background: #eef4ff;
+  color: var(--blue);
+}
+
+/* Bottom buttons */
+.customer-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+
+.cancel-button {
+  border: 1px solid var(--line);
+  background: white;
+  color: #526078;
+  border-radius: 9px;
+  padding: 11px 18px;
+  font-weight: 800;
+}
+
+.save-customer-button {
+  padding: 11px 20px;
+}
+
+/* =========================================
+   MOBILE
+========================================= */
+@media (max-width: 650px) {
+.add-customer-panel {
+  margin: 12px 0;
+  padding: 18px;
+}
+
+.customer-form {
+  grid-template-columns: 1fr;
+  gap: 17px;
+}
+
+.full-width-field {
+  grid-column: auto;
+}
+
+.add-customer-header h1 {
+  font-size: 24px;
+}
+
+.add-customer-panel .choices {
+  width: 100%;
+}
+
+.add-customer-panel .choices button {
+  flex: 1;
+}
+
+.customer-actions {
+  flex-direction: column-reverse;
+}
+
+.customer-actions button {
+  width: 100%;
+}
+
+}
+
+/* =========================================================
+   ADD CUSTOMER - MULTI STEP FORM
+========================================================= */
+
+/* -------------------------
+   STEP INDICATOR
+------------------------- */
+.customer-steps {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  margin: 25px 0 32px;
+}
+
+.customer-step {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #8a96a8;
+  white-space: nowrap;
+}
+
+.customer-step span {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #edf1f6;
+  color: #738096;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.customer-step b {
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.customer-step.active {
+  color: var(--blue);
+}
+
+.customer-step.active span {
+  background: var(--blue);
+  color: white;
+}
+
+.step-line {
+  flex: 1;
+  height: 2px;
+  background: #dfe6ef;
+  margin: 0 16px;
+}
+
+/* -------------------------
+   SECTION TITLE
+------------------------- */
+.form-section-title {
+  font-size: 16px;
+  font-weight: 900;
+  color: var(--navy);
+  padding-bottom: 11px;
+  margin-bottom: 22px;
+  border-bottom: 1px solid var(--line);
+}
+
+/* -------------------------
+   SELECT / DOCUMENT TYPE
+------------------------- */
+.form-field select {
+  width: 100%;
+  height: 46px;
+  border: 1px solid #d4dce8;
+  border-radius: 9px;
+  background: white;
+  padding: 0 12px;
+  color: #172033;
+  font: inherit;
+  font-size: 14px;
+  outline: none;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.form-field select:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.10);
+}
+
+/* =========================================================
+   PHOTO / DOCUMENT UPLOAD BOX
+========================================================= */
+.form-field > label.photo-upload-box {
+  width: 100%;
+  min-height: 165px;
+  margin: 0;
+  border: 2px dashed #cbd6e5;
+  border-radius: 12px;
+  background: #f8faff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  overflow: hidden;
+  transition: 0.2s;
+}
+
+.form-field > label.photo-upload-box:hover {
+  border-color: var(--blue);
+  background: #f0f5ff;
+}
+
+/* Upload text */
+.upload-placeholder {
+  width: 100%;
+  padding: 25px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.upload-placeholder strong {
+  display: block;
+  color: var(--blue);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.upload-placeholder small {
+  display: block;
+  margin-top: 7px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* Uploaded image preview */
+.photo-upload-box img {
+  width: 100%;
+  height: 190px;
+  object-fit: contain;
+  background: #f3f6fa;
+}
+
+/* =========================================================
+   RESPONSIVE ADD CUSTOMER
+========================================================= */
+@media (max-width: 650px) {
+.customer-steps {
+  margin: 20px 0 28px;
+}
+
+.customer-step {
+  flex-direction: column;
+  text-align: center;
+  gap: 5px;
+}
+
+.customer-step span {
+  width: 30px;
+  height: 30px;
+}
+
+.customer-step b {
+  font-size: 9px;
+}
+
+.step-line {
+  margin: 0 6px;
+}
+
+.form-field > label.photo-upload-box {
+  min-height: 140px;
+}
+
+}
+
+
+/* =========================================================
+   ADD CUSTOMER - MULTIPLE DOCUMENTS
+========================================================= */
+
+.single-photo-upload {
+  width: 100%;
+  min-height: 180px;
+  padding: 0;
+  overflow: hidden;
+
+  border: 2px dashed #cbd6e5;
+  border-radius: 12px;
+
+  background: #f8faff;
+}
+
+.single-photo-upload:hover {
+  border-color: var(--blue);
+  background: #f0f5ff;
+}
+
+.single-photo-upload img {
+  width: 100%;
+  height: 220px;
+  object-fit: contain;
+  background: #f3f6fa;
+}
+
+.multi-document-section {
+  margin-top: 26px;
+}
+
+.multi-document-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.multi-document-heading h3 {
+  margin: 0;
+  color: #172033;
+  font-size: 15px;
+}
+
+.multi-document-heading p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.add-document-button {
+  flex-shrink: 0;
+
+  padding: 10px 14px;
+
+  border: 1px solid var(--blue);
+  border-radius: 9px;
+
+  background: #eef4ff;
+  color: var(--blue);
+
+  font-weight: 900;
+}
+
+.document-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.document-entry-card {
+  padding: 16px;
+
+  border: 1px solid #e2e8f0;
+  border-radius: 13px;
+
+  background: #f8fafc;
+}
+
+.document-entry-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.document-entry-header strong {
+  color: #172033;
+  font-size: 13px;
+}
+
+.remove-document-button {
+  width: 31px;
+  height: 31px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 0;
+  border-radius: 50%;
+
+  background: #fff0f0;
+  color: #b91c1c;
+
+  font-size: 20px;
+}
+
+.document-entry-grid {
+  display: grid;
+
+  grid-template-columns:
+    1fr 1fr;
+
+  gap: 16px;
+}
+
+.document-upload-button {
+  width: 100%;
+  min-height: 46px;
+
+  border: 1px dashed #b9c7da;
+  border-radius: 9px;
+
+  background: #ffffff;
+  color: var(--blue);
+
+  font-weight: 900;
+}
+
+.document-upload-button:hover {
+  border-color: var(--blue);
+  background: #eef4ff;
+}
+
+.document-preview-small {
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+  margin-top: 9px;
+  padding: 8px;
+
+  border: 1px solid #e2e8f0;
+  border-radius: 9px;
+
+  background: #ffffff;
+}
+
+.document-preview-small img {
+  width: 56px;
+  height: 56px;
+
+  flex-shrink: 0;
+
+  border-radius: 7px;
+
+  object-fit: cover;
+}
+
+.document-preview-small span {
+  overflow: hidden;
+
+  color: #526078;
+
+  font-size: 11px;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
+/* =========================================================
+   OWN APP POPUPS
+========================================================= */
+
+.app-modal-backdrop {
+  position: fixed;
+  inset: 0;
+
+  z-index: 100000;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 22px;
+
+  background:
+    rgba(15, 23, 42, 0.68);
+
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.app-modal {
+  width: 100%;
+  max-width: 400px;
+
+  padding: 28px 22px 22px;
+
+  border-radius: 22px;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 25px 70px
+    rgba(0, 0, 0, 0.28);
+
+  text-align: center;
+}
+
+.app-modal h2 {
+  margin: 0;
+
+  color: #172033;
+
+  font-size: 22px;
+}
+
+.app-modal > p {
+  margin: 9px 0 20px;
+
+  color: #64748b;
+
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.app-modal-icon {
+  width: 62px;
+  height: 62px;
+
+  margin: 0 auto 16px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  font-size: 29px;
+  font-weight: 900;
+}
+
+.app-modal-icon.warning {
+  background: #fff3df;
+  color: #b66a00;
+}
+
+.app-modal-icon.error {
+  background: #fff0f0;
+  color: #b91c1c;
+}
+
+.app-modal-icon.success {
+  background: #eaf8ef;
+  color: #159447;
+}
+
+.app-modal-icon.blue {
+  background: #eef4ff;
+  color: var(--blue);
+}
+
+.app-modal-full-button {
+  width: 100%;
+
+  margin-top: 9px;
+
+  padding: 14px;
+}
+
+
+/* =========================================================
+   CAMERA / FILE OPTIONS
+========================================================= */
+
+.upload-source-actions {
+  display: grid;
+
+  grid-template-columns:
+    1fr 1fr;
+
+  gap: 11px;
+
+  margin: 16px 0;
+}
+
+.upload-source-button {
+  min-height: 125px;
+
+  padding: 16px 10px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+
+  background: #f8fafc;
+  color: #172033;
+}
+
+.upload-source-button:hover {
+  border-color: var(--blue);
+  background: #eef4ff;
+}
+
+.upload-source-symbol {
+  margin-bottom: 8px;
+
+  font-size: 28px;
+}
+
+.upload-source-button strong {
+  font-size: 14px;
+}
+
+.upload-source-button small {
+  margin-top: 5px;
+
+  color: var(--muted);
+
+  font-size: 10px;
+}
+
+.app-modal-cancel {
+  width: 100%;
+}
+
+
+/* =========================================================
+   SUCCESS
+========================================================= */
+
+.customer-success-details {
+  margin-bottom: 14px;
+
+  padding: 14px 16px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 12px;
+
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+
+  background: #f8fafc;
+}
+
+.customer-success-details span {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.customer-success-details strong {
+  color: #173d78;
+  font-size: 14px;
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 650px) {
+  .document-entry-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .multi-document-heading {
+    align-items: flex-start;
+  }
+
+  .single-photo-upload img {
+    height: 190px;
+  }
+}
+
+@media (max-width: 420px) {
+  .upload-source-actions {
+    grid-template-columns: 1fr;
+  }
+}
+
+

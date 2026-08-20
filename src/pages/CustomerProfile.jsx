@@ -6,6 +6,32 @@ import {
   recordLoanPayment,
 } from "../utils/customerStorage";
 import { getPhoto } from "../utils/photoStorage";
+import "../styles/CustomerProfile.css";
+
+
+const SESSION_KEY = "fincapital_session";
+
+function getCurrentCollector() {
+  try {
+    const saved = localStorage.getItem(SESSION_KEY);
+
+    if (!saved) {
+      return "Owner";
+    }
+
+    const session = JSON.parse(saved);
+
+    return (
+      session.displayName ||
+      session.profileName ||
+      session.name ||
+      (session.role === "agent" ? "Agent" : "Owner")
+    );
+  } catch {
+    return "Owner";
+  }
+}
+
 
 function formatMoney(value) {
   return Number(value || 0).toLocaleString("en-IN", {
@@ -414,10 +440,7 @@ export default function CustomerProfile() {
     setFineAmount,
   ] = useState("");
 
-  const [
-    collectedBy,
-    setCollectedBy,
-  ] = useState("Owner");
+  const [collectedBy] = useState(getCurrentCollector);
 
   /* PRECLOSE */
 
@@ -739,10 +762,6 @@ export default function CustomerProfile() {
     );
 
     setFineAmount("");
-
-    setCollectedBy(
-      "Owner"
-    );
   };
 
   const closePayment = () => {
@@ -757,12 +776,7 @@ export default function CustomerProfile() {
     setAmountReceived("");
 
     setFineAmount("");
-
-    setCollectedBy(
-      "Owner"
-    );
   };
-
   /* =========================================================
      SAVE DUE
   ========================================================= */
@@ -2312,43 +2326,12 @@ export default function CustomerProfile() {
 
               </label>
 
-              <label className="payment-field">
+              
 
-                <span>
-                  Collected By *
-                </span>
+                
 
-                <select
-                  value={
-                    collectedBy
-                  }
 
-                  onChange={(e) =>
-                    setCollectedBy(
-                      e.target.value
-                    )
-                  }
-                >
 
-                  <option value="Owner">
-                    Owner
-                  </option>
-
-                  <option value="Agent 1">
-                    Agent 1
-                  </option>
-
-                  <option value="Agent 2">
-                    Agent 2
-                  </option>
-
-                  <option value="Agent 3">
-                    Agent 3
-                  </option>
-
-                </select>
-
-              </label>
 
               {paymentTab ===
                 "Due" && (

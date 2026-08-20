@@ -11,6 +11,8 @@ import {
   loadCustomers,
 } from "../utils/customerStorage";
 
+import "../styles/AddLoan.css";
+
 function getTodayDate() {
   const now = new Date();
   const offset = now.getTimezoneOffset();

@@ -1,0 +1,569 @@
+/* =========================================================
+   PAY NOW / DUE / FINE
+========================================================= */
+.loan-slot-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+.pay-now-button {
+  min-width: 120px;
+}
+
+.payment-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: rgba(5, 15, 30, 0.68);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.payment-modal {
+  width: min(560px, 96vw);
+  max-height: 92vh;
+  overflow: auto;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
+}
+
+.payment-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--line);
+}
+
+.payment-modal-header h3 {
+  margin: 0;
+}
+
+.payment-modal-header p {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.payment-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 14px 20px 0;
+}
+
+.payment-tabs button {
+  border: 1px solid var(--line);
+  background: #f7f9fc;
+  color: #526078;
+  border-radius: 9px;
+  padding: 11px;
+  font-weight: 900;
+}
+
+.payment-tabs button.active {
+  color: var(--blue);
+  border-color: var(--blue);
+  background: #eef4ff;
+}
+
+.payment-modal-body {
+  padding: 18px 20px 20px;
+}
+
+.payment-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+  margin-bottom: 16px;
+}
+
+.payment-summary-grid > div,
+.payment-preview {
+  padding: 12px;
+  border: 1px solid #e4eaf2;
+  border-radius: 10px;
+  background: #f8faff;
+}
+
+.payment-summary-grid span,
+.payment-preview span {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.payment-summary-grid b,
+.payment-preview b {
+  font-size: 13px;
+}
+
+.payment-field {
+  display: block;
+  margin-top: 13px;
+}
+
+.payment-field > span {
+  display: block;
+  margin-bottom: 6px;
+  color: #526078;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.payment-field input {
+  width: 100%;
+  border: 1px solid #d4dce8;
+  border-radius: 9px;
+  padding: 11px;
+  font: inherit;
+}
+
+.payment-preview {
+  margin-top: 14px;
+}
+
+@media (max-width: 650px) {
+.payment-summary-grid {
+  grid-template-columns: 1fr;
+}
+
+.loan-slot-actions {
+  flex-direction: column;
+}
+
+.loan-slot-actions button {
+  width: 100%;
+}
+
+}
+
+/* =========================================================
+   PAY NOW - DUE / FINE + PAYMENT HISTORY
+========================================================= */
+.payment-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+  margin: 15px 0 16px;
+}
+
+.payment-summary-grid > div {
+  padding: 12px;
+  border: 1px solid #e4eaf2;
+  border-radius: 10px;
+  background: #f8faff;
+}
+
+.payment-summary-grid span {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.payment-summary-grid b {
+  font-size: 13px;
+}
+
+/* =========================================================
+   PAYMENT HISTORY
+========================================================= */
+.payment-history-wrap {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.payment-history-table {
+  width: 100%;
+  min-width: 680px;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.payment-history-table th {
+  background: #f8fafc;
+  color: #68768c;
+  font-size: 10px;
+  font-weight: 900;
+  padding: 12px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+}
+
+.payment-history-table td {
+  padding: 13px 14px;
+  border-bottom: 1px solid #edf1f5;
+  font-size: 12px;
+}
+
+.payment-history-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.payment-history-row.due td {
+  background: #f1fbf4;
+}
+
+.payment-history-row.fine td {
+  background: #fff8eb;
+}
+
+.payment-type-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 9px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.payment-type-badge.due {
+  background: #dcf7e5;
+  color: #15803d;
+}
+
+.payment-type-badge.fine {
+  background: #ffedc9;
+  color: #a35a00;
+}
+
+.payment-history-empty {
+  padding: 22px;
+  border: 1px dashed #d7e0ea;
+  border-radius: 10px;
+  background: #fafcff;
+  color: var(--muted);
+  text-align: center;
+  font-size: 12px;
+}
+
+@media (max-width: 650px) {
+.payment-summary-grid {
+  grid-template-columns: 1fr;
+}
+
+.loan-slot-actions {
+  flex-direction: column;
+}
+
+.loan-slot-actions button {
+  width: 100%;
+}
+
+}
+
+.success-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 9999;
+}
+
+.success-modal {
+  width: 100%;
+  max-width: 380px;
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 30px 24px 24px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  animation: successPopup 0.25s ease-out;
+}
+
+.success-icon {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 18px;
+  border-radius: 50%;
+  background: #e8f8ef;
+  color: #16a34a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 38px;
+  font-weight: 700;
+}
+
+.success-modal h2 {
+  margin: 0;
+  color: #172033;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.success-message {
+  margin: 10px 0 22px;
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.success-details {
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 6px 18px;
+  margin-bottom: 22px;
+}
+
+.success-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  padding: 14px 0;
+}
+
+.success-detail-row span {
+  color: #64748b;
+  font-size: 14px;
+}
+
+.success-detail-row strong {
+  color: #173d78;
+  font-size: 14px;
+}
+
+.success-divider {
+  height: 1px;
+  background: #e5e7eb;
+}
+
+.success-button {
+  width: 100%;
+  border: none;
+  border-radius: 12px;
+  padding: 15px;
+  background: #173d78;
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.success-button:active {
+  transform: scale(0.98);
+}
+
+@keyframes successPopup {
+  from {
+    opacity: 0;
+    transform: scale(0.92) translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+
+}
+
+
+.preclose-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 22px;
+  background: rgba(15, 23, 42, 0.68);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.preclose-modal {
+  width: 100%;
+  max-width: 410px;
+  padding: 28px 24px 24px;
+  background: #ffffff;
+  border-radius: 22px;
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.28);
+  text-align: center;
+}
+
+.preclose-modal-icon {
+  width: 62px;
+  height: 62px;
+  margin: 0 auto 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #fff3df;
+  color: #b66a00;
+  font-size: 30px;
+  font-weight: 800;
+}
+
+.preclose-modal h2 {
+  margin: 0;
+  color: #172033;
+  font-size: 23px;
+}
+
+.preclose-modal-message {
+  margin: 9px 0 20px;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.preclose-modal-details {
+  margin-bottom: 22px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #f8fafc;
+  text-align: left;
+}
+
+.preclose-modal-details > div {
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.preclose-modal-details > div + div {
+  border-top: 1px solid #e2e8f0;
+}
+
+.preclose-modal-details span {
+  color: #64748b;
+  font-size: 13px;
+}
+
+.preclose-modal-details strong {
+  color: #172033;
+}
+
+.preclose-modal-actions {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr;
+  gap: 10px;
+}
+
+.preclose-confirm-button {
+  padding: 14px 16px;
+  border: 1px solid #f2a638;
+  border-radius: 12px;
+  background: #fff3df;
+  color: #9a5b00;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* =========================================================
+   CUSTOMER PAYMENT HISTORY - CASH FLOW
+   ========================================================= */
+.customer-cashflow-summary {
+  margin-bottom: 18px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.customer-cashflow-card {
+  padding: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #f8fafc;
+}
+
+.customer-cashflow-card span {
+  display: block;
+  margin-bottom: 5px;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.customer-cashflow-card strong {
+  color: #172033;
+  font-size: 18px;
+}
+
+.customer-cashflow-card.incoming strong,
+.cash-amount-incoming {
+  color: #15803d;
+}
+
+.customer-cashflow-card.outgoing strong,
+.cash-amount-outgoing {
+  color: #b91c1c;
+}
+
+.customer-cashflow-card.net strong {
+  color: #173d78;
+}
+
+.cash-direction-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.cash-direction-badge.incoming {
+  background: #eaf8ef;
+  color: #15803d;
+}
+
+.cash-direction-badge.outgoing {
+  background: #fff0f0;
+  color: #b91c1c;
+}
+
+.payment-type-badge.loan-given {
+  background: #fff0f0;
+  color: #b91c1c;
+}
+
+.payment-type-badge.preclose {
+  background: #e8eefb;
+  color: #173d78;
+}
+
+@media (max-width: 700px) {
+.customer-cashflow-summary {
+  grid-template-columns: 1fr;
+}
+
+.preclose-modal-actions {
+  grid-template-columns: 1fr;
+}
+
+.payment-history-wrap {
+  overflow-x: auto;
+}
+
+.payment-history-table {
+  min-width: 760px;
+}
+
+}
+

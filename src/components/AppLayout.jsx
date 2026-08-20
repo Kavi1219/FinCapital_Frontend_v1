@@ -1,27 +1,277 @@
-import { Outlet, useNavigate } from "react-router";
+import {
+  Outlet,
+  useLocation,
+  useNavigate,
+} from "react-router";
+
 import { useState } from "react";
+
 import Sidebar from "./Sidebar";
+
+import "../styles/SharedPages.css";
+
 export default function AppLayout() {
-  const [open, setOpen] = useState(false);
+
+  const [open, setOpen] =
+    useState(false);
+
+  const [moreOpen, setMoreOpen] =
+    useState(false);
+
   const nav = useNavigate();
+
+  const location = useLocation();
+
+  function isActive(path) {
+    return location.pathname.startsWith(path);
+  }
+
+  function goTo(path) {
+    nav(path);
+    setMoreOpen(false);
+  }
+
   return (
     <div>
+
+      {/* =====================================================
+          TOP HEADER
+      ===================================================== */}
+
       <header className="header">
-        <button className="brand" onClick={() => setOpen(true)}>
-          <span className="avatar">S</span>
+
+        <button
+          className="brand"
+          onClick={() =>
+            setOpen(true)
+          }
+        >
+          <span className="avatar">
+            S
+          </span>
+
           <span>
-            <b>Sangam Fin Capital</b>
-            <small>Main Branch • Branch Location</small>
+            <b>
+              Sangam Fin Capital
+            </b>
+
+            <small>
+              Main Branch • Branch Location
+            </small>
           </span>
         </button>
-        <button className="primary" onClick={() => nav("/customers/new")}>
+
+        {/*
+          Top-right area intentionally empty.
+
+          We removed the old:
           + Customer
-        </button>
+
+          We can add another function here later.
+        */}
+
+        <div className="header-right-placeholder" />
+
       </header>
-      <Sidebar open={open} onClose={() => setOpen(false)} />
+
+      {/* =====================================================
+          SIDEBAR
+      ===================================================== */}
+
+      <Sidebar
+        open={open}
+        onClose={() =>
+          setOpen(false)
+        }
+      />
+
+      {/* =====================================================
+          DESKTOP FLOATING NAVIGATION
+      ===================================================== */}
+
+      <nav className="desktop-floating-dock">
+
+        {/* HOME */}
+
+        <button
+          className={
+            isActive("/dashboard")
+              ? "active"
+              : ""
+          }
+          onClick={() =>
+            goTo("/dashboard")
+          }
+          type="button"
+        >
+          <span>⌂</span>
+          <small>Home</small>
+        </button>
+
+        {/* CUSTOMERS */}
+
+        <button
+          className={
+            isActive("/customers")
+              ? "active"
+              : ""
+          }
+          onClick={() =>
+            goTo("/customers")
+          }
+          type="button"
+        >
+          <span>◎</span>
+          <small>Customers</small>
+        </button>
+
+        {/* COLLECTION */}
+
+        <button
+          className={
+            isActive("/collection")
+              ? "active"
+              : ""
+          }
+          onClick={() =>
+            goTo("/collection")
+          }
+          type="button"
+        >
+          <span>₹</span>
+          <small>Collection</small>
+        </button>
+
+        {/* OVERVIEW */}
+
+        <button
+          className={
+            isActive("/reports")
+              ? "active"
+              : ""
+          }
+          onClick={() =>
+            goTo("/reports")
+          }
+          type="button"
+        >
+          <span>▦</span>
+          <small>Overview</small>
+        </button>
+
+        {/* MORE */}
+
+        <button
+          className={
+            moreOpen
+              ? "active"
+              : ""
+          }
+          onClick={() =>
+            setMoreOpen(
+              (value) => !value
+            )
+          }
+          type="button"
+        >
+          <span>•••</span>
+          <small>More</small>
+        </button>
+
+      </nav>
+
+      {/* =====================================================
+          DESKTOP MORE MENU
+      ===================================================== */}
+
+      {moreOpen && (
+        <>
+
+          <div
+            className="desktop-dock-more-backdrop"
+            onClick={() =>
+              setMoreOpen(false)
+            }
+          />
+
+          <section className="desktop-dock-more-menu">
+
+            <button
+              type="button"
+              onClick={() =>
+                goTo("/loans")
+              }
+            >
+              Loans
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                goTo("/payments")
+              }
+            >
+              Payments
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                goTo("/expenses")
+              }
+            >
+              Expenses
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                goTo("/reports")
+              }
+            >
+              Reports
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                goTo("/agents")
+              }
+            >
+              Agents
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                goTo("/documents")
+              }
+            >
+              Documents
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                goTo("/settings")
+              }
+            >
+              Settings
+            </button>
+
+          </section>
+
+        </>
+      )}
+
+      {/* =====================================================
+          PAGE CONTENT
+      ===================================================== */}
+
       <main className="container">
         <Outlet />
       </main>
+
     </div>
   );
 }

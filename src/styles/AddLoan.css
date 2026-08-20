@@ -1,0 +1,157 @@
+.loan-summary-card {
+  margin-top: 20px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 16px;
+}
+
+.loan-summary-title {
+  font-weight: 700;
+  color: #172033;
+  margin-bottom: 10px;
+}
+
+.loan-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  font-size: 14px;
+}
+
+.loan-summary-item span {
+  display: block;
+  color: #64748b;
+}
+
+.loan-summary-item strong {
+  display: block;
+  margin-top: 4px;
+  font-weight: 700;
+  color: #172033;
+}
+
+.loan-summary-item .loan-summary-highlight {
+  color: #173d78;
+}
+
+/* =========================================================
+   ADD LOAN - SUCCESS POPUP
+   ========================================================= */
+.loan-success-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 22px;
+  background: rgba(15, 23, 42, 0.68);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.loan-success-modal {
+  width: 100%;
+  max-width: 390px;
+  padding: 30px 22px 22px;
+  background: #ffffff;
+  border-radius: 24px;
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.28);
+  text-align: center;
+}
+
+.loan-success-icon-wrap {
+  width: 74px;
+  height: 74px;
+  margin: 0 auto 18px;
+  border-radius: 50%;
+  background: #eaf8ef;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loan-success-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #22a35a;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 27px;
+  font-weight: 700;
+}
+
+.loan-success-modal h2 {
+  margin: 0;
+  font-size: 23px;
+  color: #172033;
+}
+
+.loan-success-message {
+  margin: 9px 0 22px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: #64748b;
+}
+
+.loan-success-details {
+  margin-bottom: 22px;
+  overflow: hidden;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  text-align: left;
+}
+
+.loan-success-row {
+  padding: 14px 17px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+}
+
+.loan-success-row span {
+  color: #64748b;
+}
+
+.loan-success-row strong {
+  color: #172033;
+}
+
+.loan-success-divider {
+  height: 1px;
+  background: #e2e8f0;
+}
+
+.loan-success-button {
+  width: 100%;
+  padding: 15px 20px;
+  border: none;
+  border-radius: 12px;
+  background: #173d78;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+@media (max-width: 600px) {
+.loan-summary-grid {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.loan-success-modal {
+  max-width: 360px;
+}
+
+}
+
+

@@ -1,0 +1,4 @@
+/* Not used by the app now.
+   Each JSX page imports its matching CSS file.
+   global.css is imported once in src/main.jsx.
+*/

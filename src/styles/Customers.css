@@ -1,0 +1,792 @@
+/* =========================================================
+   CUSTOMERS LIST
+========================================================= */
+
+.customer-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 20px;
+}
+
+
+/* =========================================================
+   CUSTOMER CARD
+========================================================= */
+
+.customer-list-card {
+  background: #ffffff;
+
+  border: 1px solid var(--line);
+
+  border-radius: 14px;
+
+  padding: 16px 18px;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  gap: 20px;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.clickable-customer-card {
+  cursor: pointer;
+}
+
+.customer-list-card:hover {
+  border-color: #b9c9df;
+
+  box-shadow:
+    0 7px 18px rgba(15, 23, 42, 0.06);
+
+  transform: translateY(-1px);
+}
+
+
+/* =========================================================
+   CUSTOMER LEFT
+========================================================= */
+
+.customer-list-main {
+  display: flex;
+  align-items: center;
+
+  gap: 14px;
+
+  min-width: 250px;
+}
+
+.customer-list-photo {
+  width: 55px;
+  height: 55px;
+
+  flex-shrink: 0;
+
+  border-radius: 50%;
+
+  background: #eaf1ff;
+
+  color: var(--blue);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  overflow: hidden;
+
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.customer-list-photo img {
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+}
+
+.customer-list-info h3 {
+  margin: 0 0 5px;
+
+  color: #0f2742;
+
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.customer-list-info p {
+  margin: 3px 0;
+
+  color: var(--muted);
+
+  font-size: 11px;
+}
+
+
+/* =========================================================
+   LOAN DETAILS
+========================================================= */
+
+.customer-loan-info {
+  flex: 1;
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(4, minmax(100px, 1fr));
+
+  gap: 18px 20px;
+
+  align-items: center;
+}
+
+.customer-loan-info > div {
+  min-width: 0;
+}
+
+.customer-loan-info span {
+  display: block;
+
+  color: var(--muted);
+
+  font-size: 10px;
+  font-weight: 700;
+
+  margin-bottom: 5px;
+}
+
+.customer-loan-info b {
+  color: #172033;
+
+  font-size: 13px;
+  font-weight: 700;
+}
+
+
+/* =========================================================
+   PAY / VIEW ACTIONS
+========================================================= */
+
+.customer-card-actions {
+  grid-column: span 2;
+
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+
+  gap: 8px;
+
+  align-self: end;
+}
+
+
+/* PAY BUTTON */
+
+.customer-pay-btn {
+  min-width: 68px;
+  height: 36px;
+
+  padding: 0 16px;
+
+  border: 1px solid #1368aa;
+  border-radius: 7px;
+
+  background: #1368aa;
+
+  color: #ffffff;
+
+  font-size: 11px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.customer-pay-btn:hover {
+  background: #0b4e82;
+
+  border-color: #0b4e82;
+
+  transform: translateY(-1px);
+
+  box-shadow:
+    0 4px 12px rgba(19, 104, 170, 0.22);
+}
+
+.customer-pay-btn:active {
+  transform: scale(0.97);
+}
+
+
+/* VIEW BUTTON */
+
+.customer-view-btn {
+  min-width: 68px;
+  height: 36px;
+
+  padding: 0 16px;
+
+  border: 1px solid #c9d8e4;
+  border-radius: 7px;
+
+  background: #ffffff;
+
+  color: #315b7c;
+
+  font-size: 11px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.customer-view-btn:hover {
+  background: #edf6fc;
+
+  border-color: #9fc3dc;
+
+  color: #1368aa;
+
+  transform: translateY(-1px);
+}
+
+
+/* =========================================================
+   EMPTY STATE
+========================================================= */
+
+.empty-customers {
+  text-align: center;
+
+  padding: 50px 20px;
+
+  color: var(--muted);
+}
+
+.empty-customers h3 {
+  color: #334155;
+
+  margin-bottom: 7px;
+}
+
+
+/* =========================================================
+   PAYMENT BACKDROP
+========================================================= */
+
+.customer-payment-backdrop {
+  position: fixed;
+
+  inset: 0;
+
+  z-index: 5000;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 20px;
+
+  background:
+    rgba(7, 28, 48, 0.52);
+
+  backdrop-filter: blur(3px);
+}
+
+
+/* =========================================================
+   PAYMENT MODAL
+========================================================= */
+
+.customer-payment-modal {
+  width: 100%;
+  max-width: 460px;
+
+  max-height: 90vh;
+
+  overflow-y: auto;
+
+  background: #ffffff;
+
+  border: 1px solid #dfe7ee;
+
+  border-radius: 14px;
+
+  box-shadow:
+    0 24px 60px rgba(8, 27, 43, 0.28);
+
+  animation:
+    customerPaymentOpen 0.2s ease;
+}
+
+@keyframes customerPaymentOpen {
+
+  from {
+    opacity: 0;
+
+    transform:
+      translateY(10px)
+      scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+
+    transform:
+      translateY(0)
+      scale(1);
+  }
+
+}
+
+
+/* =========================================================
+   PAYMENT HEADER
+========================================================= */
+
+.customer-payment-header {
+  padding: 18px 20px;
+
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+
+  gap: 15px;
+
+  border-bottom: 1px solid #e7edf2;
+}
+
+.customer-payment-header h3 {
+  margin: 0;
+
+  color: #102d4f;
+
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.customer-payment-header p {
+  margin: 5px 0 0;
+
+  color: #6d7f91;
+
+  font-size: 11px;
+}
+
+
+/* CLOSE */
+
+.customer-payment-close {
+  width: 34px;
+  height: 34px;
+
+  flex-shrink: 0;
+
+  border: 0;
+  border-radius: 50%;
+
+  background: #f1f5f8;
+
+  color: #527086;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 21px;
+
+  cursor: pointer;
+
+  transition: 0.2s ease;
+}
+
+.customer-payment-close:hover {
+  background: #e6edf3;
+
+  color: #102d4f;
+}
+
+
+/* =========================================================
+   DUE / FINE TABS
+========================================================= */
+
+.customer-payment-tabs {
+  display: flex;
+
+  gap: 5px;
+
+  margin: 16px 20px 0;
+
+  padding: 4px;
+
+  border-radius: 9px;
+
+  background: #eef3f7;
+}
+
+.customer-payment-tabs button {
+  flex: 1;
+
+  min-height: 36px;
+
+  border: 0;
+  border-radius: 7px;
+
+  background: transparent;
+
+  color: #64798c;
+
+  font-size: 11px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition: 0.2s ease;
+}
+
+.customer-payment-tabs button:hover {
+  color: #1368aa;
+}
+
+.customer-payment-tabs button.active {
+  background: #ffffff;
+
+  color: #1368aa;
+
+  box-shadow:
+    0 2px 7px rgba(20, 48, 70, 0.10);
+}
+
+
+/* =========================================================
+   PAYMENT BODY
+========================================================= */
+
+.customer-payment-body {
+  padding: 18px 20px 20px;
+}
+
+
+/* =========================================================
+   PAYMENT INPUT
+========================================================= */
+
+.customer-payment-field {
+  display: flex;
+  flex-direction: column;
+
+  gap: 7px;
+
+  margin-bottom: 16px;
+}
+
+.customer-payment-field span {
+  color: #455d71;
+
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.customer-payment-field input {
+  width: 100%;
+
+  min-height: 43px;
+
+  padding: 9px 12px;
+
+  border: 1px solid #d5e0e8;
+  border-radius: 7px;
+
+  background: #ffffff;
+
+  color: #17293a;
+
+  font-size: 12px;
+
+  outline: none;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.customer-payment-field input:hover {
+  border-color: #b9cbd8;
+}
+
+.customer-payment-field input:focus {
+  border-color: #1368aa;
+
+  box-shadow:
+    0 0 0 3px
+    rgba(19, 104, 170, 0.10);
+}
+
+
+/* =========================================================
+   PAYMENT SUMMARY
+========================================================= */
+
+.customer-payment-summary {
+  display: grid;
+
+  grid-template-columns:
+    repeat(3, 1fr);
+
+  gap: 8px;
+
+  margin-bottom: 16px;
+}
+
+.customer-payment-summary > div {
+  padding: 12px;
+
+  border: 1px solid #e1e9ef;
+
+  border-radius: 8px;
+
+  background: #f7fafc;
+}
+
+.customer-payment-summary span {
+  display: block;
+
+  margin-bottom: 5px;
+
+  color: #6d7f91;
+
+  font-size: 9px;
+  font-weight: 600;
+}
+
+.customer-payment-summary b {
+  color: #102d4f;
+
+  font-size: 13px;
+  font-weight: 750;
+}
+
+
+/* =========================================================
+   CONFIRM PAYMENT
+========================================================= */
+
+.customer-payment-confirm {
+  width: 100%;
+
+  min-height: 43px;
+
+  border: 0;
+  border-radius: 7px;
+
+  background: #1368aa;
+
+  color: #ffffff;
+
+  font-size: 11px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.customer-payment-confirm:hover {
+  background: #0b4e82;
+
+  box-shadow:
+    0 5px 14px
+    rgba(19, 104, 170, 0.23);
+}
+
+.customer-payment-confirm:active {
+  transform: scale(0.98);
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 1050px) {
+
+  .customer-loan-info {
+    grid-template-columns:
+      repeat(3, minmax(100px, 1fr));
+  }
+
+  .customer-card-actions {
+    grid-column: span 3;
+  }
+
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 750px) {
+
+  .customer-list {
+    gap: 10px;
+
+    margin-top: 14px;
+  }
+
+
+  .customer-list-card {
+    flex-direction: column;
+
+    align-items: stretch;
+
+    gap: 15px;
+
+    padding: 15px;
+  }
+
+
+  /* CUSTOMER */
+
+  .customer-list-main {
+    min-width: 0;
+  }
+
+  .customer-list-photo {
+    width: 50px;
+    height: 50px;
+
+    font-size: 18px;
+  }
+
+  .customer-list-info h3 {
+    font-size: 14px;
+  }
+
+
+  /* LOAN */
+
+  .customer-loan-info {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+
+    gap: 15px 12px;
+
+    padding-top: 14px;
+
+    border-top:
+      1px solid var(--line);
+  }
+
+  .customer-loan-info span {
+    font-size: 9px;
+  }
+
+  .customer-loan-info b {
+    font-size: 12px;
+  }
+
+
+  /* ACTIONS */
+
+  .customer-card-actions {
+    grid-column: 1 / -1;
+
+    width: 100%;
+
+    justify-content: flex-end;
+
+    padding-top: 5px;
+  }
+
+  .customer-pay-btn,
+  .customer-view-btn {
+    min-width: 78px;
+  }
+
+
+  /* PAYMENT POPUP */
+
+  .customer-payment-backdrop {
+    padding: 0;
+
+    align-items: flex-end;
+  }
+
+  .customer-payment-modal {
+    max-width: none;
+
+    max-height: 88vh;
+
+    border-radius:
+      16px
+      16px
+      0
+      0;
+  }
+
+}
+
+
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
+
+@media (max-width: 430px) {
+
+  .customer-list-card {
+    padding: 13px;
+  }
+
+  .customer-payment-header {
+    padding:
+      16px
+      15px;
+  }
+
+  .customer-payment-tabs {
+    margin:
+      14px
+      15px
+      0;
+  }
+
+  .customer-payment-body {
+    padding:
+      16px
+      15px
+      20px;
+  }
+
+  .customer-payment-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .customer-card-actions {
+    display: grid;
+
+    grid-template-columns:
+      repeat(2, 1fr);
+  }
+
+  .customer-card-actions
+  .customer-pay-btn,
+  .customer-card-actions
+  .customer-view-btn {
+    width: 100%;
+
+    min-width: 0;
+  }
+
+  /*
+    If only View is available
+    (Closed / Preclosed),
+    let it stay on the right.
+  */
+
+  .customer-card-actions
+  .customer-view-btn:only-child {
+    grid-column: 2;
+  }
+
+}

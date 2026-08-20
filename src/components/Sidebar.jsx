@@ -1,4 +1,5 @@
 import { NavLink } from "react-router";
+import "../styles/SharedPages.css";
 export default function Sidebar({ open, onClose }) {
   const cls = ({ isActive }) => "navlink " + (isActive ? "active" : "");
   return (

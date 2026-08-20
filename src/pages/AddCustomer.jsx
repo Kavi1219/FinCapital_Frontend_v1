@@ -8,6 +8,7 @@ import {
 } from "../utils/customerStorage";
 
 import { savePhoto } from "../utils/photoStorage";
+import "../styles/AddCustomer.css";
 
 const DOCUMENT_TYPES = [
   "Aadhaar Card",

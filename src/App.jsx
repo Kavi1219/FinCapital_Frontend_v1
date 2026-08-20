@@ -5,6 +5,7 @@ import {
 } from "react-router";
 
 import AppLayout from "./components/AppLayout";
+import GlobalAlert from "./components/GlobalAlert";
 
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
@@ -21,7 +22,9 @@ import Reports from "./pages/Reports";
 
 export default function App() {
   return (
-    <Routes>
+    <>
+      <GlobalAlert />
+      <Routes>
 
       {/* LOGIN */}
 
@@ -174,6 +177,7 @@ export default function App() {
         }
       />
 
-    </Routes>
+      </Routes>
+    </>
   );
 }

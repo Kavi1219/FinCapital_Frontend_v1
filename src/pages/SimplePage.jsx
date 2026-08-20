@@ -1,3 +1,4 @@
+import "../styles/SharedPages.css";
 export default function SimplePage({ title }) {
   return (
     <section className="panel">

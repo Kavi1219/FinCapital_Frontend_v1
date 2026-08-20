@@ -1,4 +1,5 @@
 import { useState } from "react";
+import "../styles/Reports.css";
 export default function Reports() {
   const [sel, setSel] = useState(null);
   return (
