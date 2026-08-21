@@ -477,3 +477,190 @@ th {
 }
 
 
+
+/* =========================================================
+   FIN CAPITAL - GLOBAL DARK FINTECH THEME
+   Approved Design System
+========================================================= */
+:root {
+  --navy: #061827;
+  --blue: #16d6c5;
+  --green: #27d39f;
+  --red: #ff6670;
+  --bg: #061624;
+  --line: rgba(148, 181, 204, 0.13);
+  --muted: #8298aa;
+  --shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+
+  --fc-primary: #16d6c5;
+  --fc-primary-dark: #0fb6a8;
+  --fc-navy: #f5f9fc;
+  --fc-ink: #dce7ef;
+  --fc-muted: #8298aa;
+  --fc-bg: #061624;
+  --fc-card: #0b2134;
+  --fc-line: rgba(148, 181, 204, 0.13);
+  --fc-red: #ff6670;
+  --fc-green: #27d39f;
+  --fc-shadow: 0 12px 32px rgba(0,0,0,.18);
+  --fc-shadow-lg: 0 28px 70px rgba(0,0,0,.40);
+}
+
+html,
+body,
+#root {
+  background:
+    radial-gradient(circle at 85% 3%, rgba(22,214,197,.06), transparent 26rem),
+    radial-gradient(circle at 18% 0%, rgba(50,115,200,.07), transparent 28rem),
+    #061624 !important;
+  color: #dce7ef !important;
+}
+
+body {
+  background-color: #061624 !important;
+}
+
+.header {
+  background: rgba(6, 24, 39, .96) !important;
+  border-bottom-color: rgba(148,181,204,.11) !important;
+  box-shadow: 0 4px 18px rgba(0,0,0,.12) !important;
+  backdrop-filter: blur(14px);
+}
+
+.brand,
+.brand b {
+  color: #f5f9fc !important;
+}
+
+.brand small,
+.sidebrand small,
+.muted,
+.title p {
+  color: #8298aa !important;
+}
+
+.avatar {
+  background: linear-gradient(145deg,#16d6c5,#137fd0) !important;
+  color: #fff !important;
+  box-shadow: 0 8px 24px rgba(22,214,197,.16) !important;
+}
+
+.container {
+  max-width: 1280px;
+}
+
+h1,
+h2,
+h3,
+h4,
+.title h1 {
+  color: #f5f9fc;
+}
+
+.panel,
+.card,
+.cash article {
+  background: linear-gradient(180deg, rgba(11,33,52,.98), rgba(8,27,44,.98)) !important;
+  border-color: rgba(148,181,204,.13) !important;
+  box-shadow: 0 12px 32px rgba(0,0,0,.16) !important;
+  color: #dce7ef;
+}
+
+.card span,
+.cash span {
+  color: #8298aa !important;
+}
+
+.card b,
+.cash b {
+  color: #fff !important;
+}
+
+.blue,
+.green,
+.red,
+.purple,
+.navy,
+.orange {
+  background: linear-gradient(180deg, rgba(13,39,61,.98), rgba(8,29,46,.98)) !important;
+}
+
+.primary {
+  background: linear-gradient(180deg,#18cdbc,#0eaa9d) !important;
+  color: #041b20 !important;
+  border: 1px solid rgba(46,232,214,.22) !important;
+  box-shadow: 0 7px 18px rgba(22,214,197,.14) !important;
+}
+
+.primary:hover {
+  background: linear-gradient(180deg,#2fe0d0,#13b7a9) !important;
+}
+
+.date {
+  background: rgba(22,214,197,.09) !important;
+  color: #3de1d2 !important;
+  border: 1px solid rgba(22,214,197,.16);
+}
+
+input,
+select,
+textarea {
+  background: rgba(4,20,33,.88) !important;
+  color: #eef5f9 !important;
+  border-color: rgba(148,181,204,.14) !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #61798d !important;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: rgba(22,214,197,.52) !important;
+  box-shadow: 0 0 0 3px rgba(22,214,197,.09) !important;
+}
+
+th {
+  background: rgba(255,255,255,.035) !important;
+  color: #8fa4b5 !important;
+  border-color: rgba(148,181,204,.11) !important;
+}
+
+td {
+  color: #dce7ef;
+  border-color: rgba(148,181,204,.08) !important;
+}
+
+tr:hover td {
+  background: rgba(22,214,197,.025) !important;
+}
+
+.secondary-button {
+  background: rgba(255,255,255,.035) !important;
+  border-color: rgba(148,181,204,.15) !important;
+  color: #8fcfff !important;
+}
+
+.danger-button {
+  background: rgba(255,102,112,.08) !important;
+  border-color: rgba(255,102,112,.22) !important;
+  color: #ff7f87 !important;
+}
+
+.fc-dialog {
+  background: linear-gradient(180deg,#0c2438,#081b2c) !important;
+  border-color: rgba(148,181,204,.14) !important;
+  color: #dce7ef !important;
+}
+
+.fc-dialog p {
+  color: #8298aa !important;
+}
+
+@media (max-width: 700px) {
+  .header {
+    background: rgba(6,24,39,.98) !important;
+  }
+}

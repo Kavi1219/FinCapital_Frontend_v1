@@ -1,6 +1,10 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router";
-import { findCustomer, recordLoanPayment } from "../utils/customerStorage";
+import {
+  findCustomer,
+  loadCustomers,
+  recordLoanPayment,
+} from "../utils/customerStorage";
 import "../styles/Dashboard.css";
 
 const SESSION_KEY = "fincapital_session";
@@ -59,76 +63,6 @@ const collections = {
   ],
 };
 
-const activeLoanCustomers = {
-  DAILY: [
-    {
-      id: "SFC-0008",
-      name: "Kumar",
-      amount: 1000,
-      status: "Active",
-    },
-    {
-      id: "SFC-0012",
-      name: "Suresh",
-      amount: 2000,
-      status: "Active",
-    },
-    {
-      id: "SFC-0015",
-      name: "Mani",
-      amount: 1500,
-      status: "Active",
-    },
-    {
-      id: "SFC-0020",
-      name: "Selvam",
-      amount: 3000,
-      status: "Active",
-    },
-  ],
-
-  WEEKLY: [
-    {
-      id: "SFC-0001",
-      name: "Ravi Kumar",
-      amount: 10000,
-      status: "Active",
-    },
-    {
-      id: "SFC-0006",
-      name: "Karthik",
-      amount: 6000,
-      status: "Active",
-    },
-    {
-      id: "SFC-0011",
-      name: "Mohan",
-      amount: 8000,
-      status: "Active",
-    },
-  ],
-
-  MONTHLY: [
-    {
-      id: "SFC-0018",
-      name: "Arun",
-      amount: 9000,
-      status: "Active",
-    },
-    {
-      id: "SFC-0021",
-      name: "Prakash",
-      amount: 15000,
-      status: "Active",
-    },
-  ],
-};
-
-const activeLoanCounts = {
-  DAILY: 18,
-  WEEKLY: 16,
-  MONTHLY: 8,
-};
 
 const cardDetails = {
   expected: {
@@ -219,6 +153,36 @@ function getTodayLocalDate() {
   return `${year}-${month}-${day}`;
 }
 
+function getPaymentLocalDate(payment) {
+  const paymentDate = payment?.paymentDate;
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(paymentDate || "")) {
+    return paymentDate;
+  }
+
+  if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(paymentDate || "")) {
+    const [day, month, year] = paymentDate.split("/");
+
+    return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+  }
+
+  const date = new Date(
+    payment?.paidAt ||
+      paymentDate ||
+      0
+  );
+
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
 function getCurrentCollector() {
   try {
     const saved = localStorage.getItem(SESSION_KEY);
@@ -277,6 +241,16 @@ function getLoanOutstanding(loan) {
 export default function Dashboard() {
   const nav = useNavigate();
 
+  const [dashboardCustomers, setDashboardCustomers] = useState([]);
+
+  function refreshDashboardCustomers() {
+    setDashboardCustomers(loadCustomers());
+  }
+
+  useEffect(() => {
+    refreshDashboardCustomers();
+  }, []);
+
   const [cycle, setCycle] = useState("DAILY");
 
   const [menuOpen, setMenuOpen] = useState(false);
@@ -284,6 +258,8 @@ export default function Dashboard() {
   const [moreOpen, setMoreOpen] = useState(false);
 
   const [overviewOpen, setOverviewOpen] = useState(false);
+
+  const [collectedOpen, setCollectedOpen] = useState(false);
 
   const [detailKey, setDetailKey] = useState(null);
 
@@ -306,6 +282,147 @@ export default function Dashboard() {
     [cycle]
   );
 
+  // =========================================================
+  // TODAY'S COLLECTED - LIVE PAYMENT HISTORY
+  // =========================================================
+
+  const todayCollectedRows = useMemo(() => {
+    const today = getTodayLocalDate();
+    const rows = [];
+
+    dashboardCustomers.forEach((record) => {
+      const customer = record.customer || {};
+
+      (record.loans || []).forEach((loan) => {
+        const duePaymentsToday = (
+          loan.paymentHistory || []
+        ).filter(
+          (payment) =>
+            (payment.paymentType || "Due") === "Due" &&
+            getPaymentLocalDate(payment) === today
+        );
+
+        if (duePaymentsToday.length === 0) {
+          return;
+        }
+
+        const latestPayment =
+          [...duePaymentsToday].sort(
+            (a, b) =>
+              new Date(b.paidAt || 0).getTime() -
+              new Date(a.paidAt || 0).getTime()
+          )[0];
+
+        /*
+          Only move a customer to Today's Collected when the
+          current due/pending has been cleared.
+
+          Partial payment:
+            pendingAfter > 0 -> remains in Today's Collection
+
+          Full / over payment:
+            pendingAfter = 0 -> moves to Today's Collected
+        */
+        const pendingAfter =
+          latestPayment?.pendingAfter !== undefined
+            ? Number(latestPayment.pendingAfter || 0)
+            : Number(loan.pendingDue || 0);
+
+        if (pendingAfter > 0) {
+          return;
+        }
+
+        const amountPaidToday =
+          duePaymentsToday.reduce(
+            (sum, payment) =>
+              sum +
+              Number(payment.amount || 0),
+            0
+          );
+
+        rows.push({
+          id: customer.customerId,
+          name: customer.name || "-",
+          cycle: loan.cycle || "-",
+          amount: amountPaidToday,
+          status: "Collected",
+          loanId: loan.loanId,
+        });
+      });
+    });
+
+    return rows;
+  }, [dashboardCustomers]);
+
+  const todayCollectionRows = useMemo(
+    () =>
+      currentRows.filter(
+        (row) =>
+          !todayCollectedRows.some(
+            (collectedRow) =>
+              collectedRow.id === row.id &&
+              String(collectedRow.cycle || "").toLowerCase() ===
+                String(row.cycle || "").toLowerCase()
+          )
+      ),
+    [currentRows, todayCollectedRows]
+  );
+
+  // =========================================================
+  // ACTIVE LOANS - LIVE DATA FROM SAVED CUSTOMERS
+  // =========================================================
+
+  const activeLoanCustomers = useMemo(() => {
+    const result = {
+      DAILY: [],
+      WEEKLY: [],
+      MONTHLY: [],
+    };
+
+    dashboardCustomers.forEach((record) => {
+      const customer = record.customer || {};
+
+      (record.loans || []).forEach((loan) => {
+        if (loan.status !== "Active") {
+          return;
+        }
+
+        const cycleKey = String(
+          loan.cycle || ""
+        ).toUpperCase();
+
+        if (!result[cycleKey]) {
+          return;
+        }
+
+        result[cycleKey].push({
+          id: customer.customerId,
+          name: customer.name || "-",
+          amount: Number(loan.loanAmount || 0),
+          status: loan.status,
+          loanId: loan.loanId,
+          cycle: loan.cycle,
+        });
+      });
+    });
+
+    return result;
+  }, [dashboardCustomers]);
+
+  const activeLoanCounts = useMemo(
+    () => ({
+      DAILY: activeLoanCustomers.DAILY.length,
+      WEEKLY: activeLoanCustomers.WEEKLY.length,
+      MONTHLY: activeLoanCustomers.MONTHLY.length,
+    }),
+    [activeLoanCustomers]
+  );
+
+  const totalActiveLoans =
+    activeLoanCounts.DAILY +
+    activeLoanCounts.WEEKLY +
+    activeLoanCounts.MONTHLY;
+
   const detail =
     detailKey && detailKey !== "activeLoans"
       ? cardDetails[detailKey]
@@ -319,8 +436,32 @@ export default function Dashboard() {
     setDetailKey(key);
 
     if (key === "activeLoans") {
+      refreshDashboardCustomers();
       setActiveLoanCycle(null);
     }
+  }
+
+  // =========================================================
+  // CHECK WHETHER THIS ROW REALLY HAS AN ACTIVE LOAN
+  // =========================================================
+
+  function canPayCustomer(customer) {
+    const record = dashboardCustomers.find(
+      (item) =>
+        item.customer?.customerId ===
+        customer.id
+    );
+
+    if (!record) {
+      return false;
+    }
+
+    return (record.loans || []).some(
+      (loan) =>
+        loan.status === "Active" &&
+        String(loan.cycle || "").toLowerCase() ===
+          String(customer.cycle || "").toLowerCase()
+    );
   }
 
   // =========================================================
@@ -328,6 +469,11 @@ export default function Dashboard() {
   // =========================================================
 
   function payCustomer(customer) {
+    if (!canPayCustomer(customer)) {
+      alert("This customer does not have an active loan for this cycle.");
+      return;
+    }
+
     const record = findCustomer(customer.id);
 
     if (!record) {
@@ -417,6 +563,7 @@ export default function Dashboard() {
     }
 
     closeDashboardPayment();
+    refreshDashboardCustomers();
     alert("Payment saved successfully.");
   }
 
@@ -457,6 +604,7 @@ export default function Dashboard() {
     }
 
     closeDashboardPayment();
+    refreshDashboardCustomers();
     alert("Fine saved successfully.");
   }
 
@@ -581,7 +729,9 @@ export default function Dashboard() {
                 </span>
 
                 <b>
-                  {card[1]}
+                  {card[3] === "activeLoans"
+                    ? totalActiveLoans
+                    : card[1]}
                 </b>
 
               </div>
@@ -697,7 +847,7 @@ export default function Dashboard() {
 
             <tbody>
 
-              {currentRows.map(
+              {todayCollectionRows.map(
                 (row) => (
 
                   <tr key={row.id}>
@@ -745,6 +895,12 @@ export default function Dashboard() {
 
                         <button
                           className="dashboard-pay-btn"
+                          disabled={!canPayCustomer(row)}
+                          title={
+                            canPayCustomer(row)
+                              ? "Record payment"
+                              : "No active loan for this cycle"
+                          }
                           onClick={() =>
                             payCustomer(row)
                           }
@@ -788,7 +944,7 @@ export default function Dashboard() {
 
         <div className="dashboard-mobile-list">
 
-          {currentRows.map(
+          {todayCollectionRows.map(
             (row) => (
 
               <article
@@ -828,6 +984,12 @@ export default function Dashboard() {
 
                     <button
                       className="dashboard-pay-btn"
+                      disabled={!canPayCustomer(row)}
+                      title={
+                        canPayCustomer(row)
+                          ? "Record payment"
+                          : "No active loan for this cycle"
+                      }
                       onClick={() =>
                         payCustomer(row)
                       }
@@ -858,6 +1020,276 @@ export default function Dashboard() {
           )}
 
         </div>
+
+      </section>
+
+      {/* =====================================================
+          TODAY'S COLLECTED
+      ===================================================== */}
+
+      <section className="panel dashboard-collected-panel">
+
+        <div className="dashboard-section-head dashboard-collected-head">
+
+          <div>
+
+            <h2>
+              Today's Collected
+            </h2>
+
+            <p>
+              Customers whose due was fully collected today.
+            </p>
+
+          </div>
+
+          <button
+            type="button"
+            className="dashboard-collected-toggle"
+            aria-expanded={collectedOpen}
+            aria-label={
+              collectedOpen
+                ? "Hide today's collected customers"
+                : "Show today's collected customers"
+            }
+            onClick={() => {
+              if (!collectedOpen) {
+                refreshDashboardCustomers();
+              }
+
+              setCollectedOpen(
+                (value) => !value
+              );
+            }}
+          >
+
+            <span className="dashboard-collected-count">
+              {todayCollectedRows.length}
+            </span>
+
+            <span
+              className={
+                "dashboard-collected-chevron " +
+                (collectedOpen ? "open" : "")
+              }
+            >
+              ⌄
+            </span>
+
+          </button>
+
+        </div>
+
+        {collectedOpen && (
+
+          <>
+
+            {todayCollectedRows.length === 0 ? (
+
+              <div className="dashboard-collected-empty">
+                No completed collections today.
+              </div>
+
+            ) : (
+
+              <>
+
+                {/* =========================================
+                    DESKTOP COLLECTED TABLE
+                ========================================= */}
+
+                <div className="dashboard-desktop-table dashboard-collected-table tablewrap">
+
+                  <table>
+
+                    <thead>
+
+                      <tr>
+
+                        <th>
+                          Customer ID
+                        </th>
+
+                        <th>
+                          Name
+                        </th>
+
+                        <th>
+                          Cycle
+                        </th>
+
+                        <th>
+                          Amount Paid
+                        </th>
+
+                        <th>
+                          Status
+                        </th>
+
+                        <th>
+                          Actions
+                        </th>
+
+                      </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                      {todayCollectedRows.map(
+                        (row) => (
+
+                          <tr
+                            key={`collected-${row.id}-${row.loanId}`}
+                          >
+
+                            <td>
+                              {row.id}
+                            </td>
+
+                            <td>
+                              {row.name}
+                            </td>
+
+                            <td>
+                              {row.cycle}
+                            </td>
+
+                            <td className="dashboard-amount dashboard-collected-amount">
+                              ₹{money(row.amount)}
+                            </td>
+
+                            <td>
+
+                              <span className="dashboard-status collected">
+                                Collected
+                              </span>
+
+                            </td>
+
+                            <td>
+
+                              <div className="dashboard-action-buttons">
+
+                                <button
+                                  type="button"
+                                  className="dashboard-pay-btn"
+                                  disabled
+                                  title="Today's due is already collected"
+                                >
+                                  Pay
+                                </button>
+
+                                <button
+                                  type="button"
+                                  className="dashboard-view-btn"
+                                  onClick={() =>
+                                    nav(
+                                      `/customers/profile/${row.id}`
+                                    )
+                                  }
+                                >
+                                  View
+                                </button>
+
+                              </div>
+
+                            </td>
+
+                          </tr>
+
+                        )
+                      )}
+
+                    </tbody>
+
+                  </table>
+
+                </div>
+
+                {/* =========================================
+                    MOBILE COLLECTED CARDS
+                ========================================= */}
+
+                <div className="dashboard-mobile-list dashboard-collected-mobile-list">
+
+                  {todayCollectedRows.map(
+                    (row) => (
+
+                      <article
+                        className="dashboard-collection-card dashboard-collected-card"
+                        key={`mobile-collected-${row.id}-${row.loanId}`}
+                      >
+
+                        <div className="dashboard-collection-top">
+
+                          <div>
+
+                            <span>
+                              {row.id}
+                            </span>
+
+                            <strong>
+                              {row.name}
+                            </strong>
+
+                          </div>
+
+                          <b>
+                            ₹{money(row.amount)}
+                          </b>
+
+                        </div>
+
+                        <div className="dashboard-collection-bottom">
+
+                          <span>
+                            {row.cycle}
+                            {" • "}
+                            Collected
+                          </span>
+
+                          <div className="dashboard-mobile-row-actions">
+
+                            <button
+                              type="button"
+                              className="dashboard-pay-btn"
+                              disabled
+                              title="Today's due is already collected"
+                            >
+                              Pay
+                            </button>
+
+                            <button
+                              type="button"
+                              className="dashboard-view-btn"
+                              onClick={() =>
+                                nav(
+                                  `/customers/profile/${row.id}`
+                                )
+                              }
+                            >
+                              View
+                            </button>
+
+                          </div>
+
+                        </div>
+
+                      </article>
+
+                    )
+                  )}
+
+                </div>
+
+              </>
+
+            )}
+
+          </>
+
+        )}
 
       </section>
 
@@ -919,6 +1351,12 @@ export default function Dashboard() {
                   <button
                     type="button"
                     className="dashboard-pay-btn"
+                    disabled={!canPayCustomer(row)}
+                    title={
+                      canPayCustomer(row)
+                        ? "Record payment"
+                        : "No active loan for this cycle"
+                    }
                     onClick={() =>
                       payCustomer(row)
                     }
@@ -1007,13 +1445,13 @@ export default function Dashboard() {
         </button>
 
         <button
-          onClick={() =>
-            setOverviewOpen(true)
-          }
-        >
-          <span>▦</span>
-          <small>Overview</small>
-        </button>
+  onClick={() =>
+    nav("/expenses")
+  }
+>
+  <span>−</span>
+  <small>Expenses</small>
+</button>
 
         <button
           onClick={() =>
@@ -1152,7 +1590,7 @@ export default function Dashboard() {
                 </h3>
 
                 <strong>
-                  42 Loans
+                  {totalActiveLoans} Loans
                 </strong>
 
               </div>
@@ -1272,7 +1710,7 @@ export default function Dashboard() {
                     (customer) => (
 
                       <article
-                        key={customer.id}
+                        key={`${customer.id}-${customer.loanId}`}
                       >
 
                         <div>
@@ -1423,7 +1861,7 @@ export default function Dashboard() {
                   Active Loans
                 </span>
                 <strong>
-                  42
+                  {totalActiveLoans}
                 </strong>
               </article>
 

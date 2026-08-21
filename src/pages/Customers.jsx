@@ -139,6 +139,11 @@ export default function Customers() {
     setCustomers,
   ] = useState([]);
 
+  const [
+    search,
+    setSearch,
+  ] = useState("");
+
 
   /* =======================================================
      PAYMENT
@@ -219,17 +224,53 @@ export default function Customers() {
      FILTER CYCLE
   ======================================================= */
 
-  const filteredRows =
-    cycle.toLowerCase() === "all"
-      ? rows
-      : rows.filter(
-          ({ loan }) =>
-            loan.cycle?.toLowerCase() ===
-            cycle.toLowerCase()
-        );
+  const filteredRows = rows.filter(
+    ({
+      customerRecord: item,
+      loan,
+    }) => {
 
+      const cycleMatch =
+        cycle.toLowerCase() === "all" ||
+        loan.cycle?.toLowerCase() ===
+          cycle.toLowerCase();
 
-  const cycleTitle =
+      if (!cycleMatch) {
+        return false;
+      }
+
+      const query =
+        search
+          .trim()
+          .toLowerCase();
+
+      if (!query) {
+        return true;
+      }
+
+      return (
+        item.customer.name
+          ?.toLowerCase()
+          .includes(query) ||
+
+        item.customer.customerId
+          ?.toLowerCase()
+          .includes(query) ||
+
+        String(
+          item.customer.mobile || ""
+        )
+          .toLowerCase()
+          .includes(query) ||
+
+        loan.loanId
+          ?.toLowerCase()
+          .includes(query)
+      );
+    }
+  );
+
+const cycleTitle =
     cycle.charAt(0).toUpperCase() +
     cycle.slice(1);
 
@@ -531,7 +572,7 @@ export default function Customers() {
           TITLE
       =================================================== */}
 
-      <div className="title">
+      <div className="title customer-list-title">
 
         <div>
 
@@ -548,6 +589,39 @@ export default function Customers() {
               : ""}
 
           </p>
+
+        </div>
+
+        <div className="customer-search-box">
+
+          <span className="customer-search-icon">
+            ⌕
+          </span>
+
+          <input
+            type="search"
+            value={search}
+            onChange={(event) =>
+              setSearch(
+                event.target.value
+              )
+            }
+            placeholder="Search name, ID, mobile or loan ID"
+          />
+
+          {search && (
+
+            <button
+              type="button"
+              aria-label="Clear search"
+              onClick={() =>
+                setSearch("")
+              }
+            >
+              ×
+            </button>
+
+          )}
 
         </div>
 

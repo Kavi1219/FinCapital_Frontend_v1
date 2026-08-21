@@ -89,7 +89,12 @@ export default function AppLayout() {
           DESKTOP FLOATING NAVIGATION
       ===================================================== */}
 
-      <nav className="desktop-floating-dock">
+      <nav
+  className={
+    "desktop-floating-dock " +
+    (open ? "sidebar-open" : "")
+  }
+>
 
         {/* HOME */}
 
@@ -144,20 +149,22 @@ export default function AppLayout() {
 
         {/* OVERVIEW */}
 
-        <button
-          className={
-            isActive("/reports")
-              ? "active"
-              : ""
-          }
-          onClick={() =>
-            goTo("/reports")
-          }
-          type="button"
-        >
-          <span>▦</span>
-          <small>Overview</small>
-        </button>
+        {/* EXPENSES */}
+
+<button
+  className={
+    isActive("/expenses")
+      ? "active"
+      : ""
+  }
+  onClick={() =>
+    goTo("/expenses")
+  }
+  type="button"
+>
+  <span>−</span>
+  <small>Expenses</small>
+</button>
 
         {/* MORE */}
 

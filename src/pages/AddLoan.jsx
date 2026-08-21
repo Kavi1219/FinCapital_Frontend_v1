@@ -16,6 +16,7 @@ import "../styles/AddLoan.css";
 function getTodayDate() {
   const now = new Date();
   const offset = now.getTimezoneOffset();
+
   const localDate = new Date(
     now.getTime() - offset * 60 * 1000
   );
@@ -36,6 +37,9 @@ export default function AddLoan() {
 
   const [cycle, setCycle] =
     useState("Weekly");
+
+  const [loanType, setLoanType] =
+    useState("EMI");
 
   const [loanDate, setLoanDate] =
     useState(getTodayDate());
@@ -65,26 +69,6 @@ export default function AddLoan() {
     return (amount * rate) / 100;
   }, [amount, rate]);
 
-  const totalRepayment = useMemo(() => {
-    // If interest is already taken upfront,
-    // the customer only has to repay the principal amount.
-    if (interestTakenUpfront) {
-      return amount;
-    }
-
-    // If interest is NOT taken upfront,
-    // customer repays principal + interest through collections.
-    return amount + interestAmount;
-  }, [amount, interestAmount, interestTakenUpfront]);
-
-  const collectionAmount = useMemo(() => {
-    if (!period || period <= 0) {
-      return 0;
-    }
-
-    return totalRepayment / period;
-  }, [totalRepayment, period]);
-
   const amountGiven = useMemo(() => {
     if (interestTakenUpfront) {
       return amount - interestAmount;
@@ -95,6 +79,74 @@ export default function AddLoan() {
     amount,
     interestAmount,
     interestTakenUpfront,
+  ]);
+
+  const totalRepayment = useMemo(() => {
+    // =====================================================
+    // IO = INTEREST ONLY
+    // Principal is returned separately.
+    // =====================================================
+
+    if (loanType === "IO") {
+      return amount;
+    }
+
+    // =====================================================
+    // EMI
+    // =====================================================
+
+    if (interestTakenUpfront) {
+      return amount;
+    }
+
+    return amount + interestAmount;
+  }, [
+    amount,
+    interestAmount,
+    interestTakenUpfront,
+    loanType,
+  ]);
+
+  const collectionAmount = useMemo(() => {
+    // =====================================================
+    // IO
+    // Collection is only interest amount every cycle.
+    //
+    // Example:
+    // ₹10,000 @ 2%
+    // Collection = ₹200/week
+    // =====================================================
+
+    if (loanType === "IO") {
+      return interestAmount;
+    }
+
+    // =====================================================
+    // EMI
+    // =====================================================
+
+    if (!period || period <= 0) {
+      return 0;
+    }
+
+    return totalRepayment / period;
+  }, [
+    loanType,
+    interestAmount,
+    totalRepayment,
+    period,
+  ]);
+
+  const principalPending = useMemo(() => {
+    if (loanType === "IO") {
+      return amount;
+    }
+
+    return totalRepayment;
+  }, [
+    loanType,
+    amount,
+    totalRepayment,
   ]);
 
   const durationUnit =
@@ -180,9 +232,7 @@ export default function AddLoan() {
 
       cycle,
 
-      // Keep EMI for compatibility with
-      // existing customer/profile screens.
-      loanType: "EMI",
+      loanType,
 
       interestRate: rate,
       interestAmount,
@@ -200,31 +250,33 @@ export default function AddLoan() {
       status: "Active",
 
       collectedAmount: 0,
-      principalPending: amount,
+
+      principalPending,
 
       pendingDue: 0,
       fineDue: 0,
       finePaidTotal: 0,
 
-     paymentHistory: [
-  {
-    id: `BORROW-${Date.now()}`,
+      paymentHistory: [
+        {
+          id: `BORROW-${Date.now()}`,
 
-    paymentType: "Loan Given",
+          paymentType: "Loan Given",
 
-    direction: "Outgoing",
+          direction: "Outgoing",
 
-    paymentDate: loanDate,
+          paymentDate: loanDate,
 
-    amount: amountGiven,
+          amount: amountGiven,
 
-    collectedBy: "Owner",
+          collectedBy: "Owner",
 
-    pendingAfter: null,
+          pendingAfter: null,
 
-    paidAt: new Date().toISOString(),
-  },
-],
+          paidAt:
+            new Date().toISOString(),
+        },
+      ],
 
       precloseAmount: null,
       preclosedAt: null,
@@ -262,7 +314,9 @@ export default function AddLoan() {
     <>
       <section className="panel add-customer-panel">
 
-        {/* HEADER */}
+        {/* =====================================================
+            HEADER
+        ===================================================== */}
 
         <div className="add-customer-header">
           <h1>Add New Loan</h1>
@@ -286,7 +340,9 @@ export default function AddLoan() {
 
         <div className="customer-form">
 
-          {/* LOAN ID */}
+          {/* =====================================================
+              LOAN ID
+          ===================================================== */}
 
           <div className="form-field">
             <label>Loan ID</label>
@@ -297,7 +353,9 @@ export default function AddLoan() {
             />
           </div>
 
-          {/* CYCLE */}
+          {/* =====================================================
+              COLLECTION CYCLE
+          ===================================================== */}
 
           <div className="form-field">
             <label>
@@ -328,7 +386,51 @@ export default function AddLoan() {
             </div>
           </div>
 
-          {/* DATE */}
+          {/* =====================================================
+              LOAN TYPE
+          ===================================================== */}
+
+          <div className="form-field">
+            <label>
+              Loan Type *
+            </label>
+
+            <div className="choices">
+
+              <button
+                type="button"
+                className={
+                  loanType === "EMI"
+                    ? "active"
+                    : ""
+                }
+                onClick={() =>
+                  setLoanType("EMI")
+                }
+              >
+                EMI
+              </button>
+
+              <button
+                type="button"
+                className={
+                  loanType === "IO"
+                    ? "active"
+                    : ""
+                }
+                onClick={() =>
+                  setLoanType("IO")
+                }
+              >
+                Interest Only
+              </button>
+
+            </div>
+          </div>
+
+          {/* =====================================================
+              DATE
+          ===================================================== */}
 
           <div className="form-field">
             <label>
@@ -346,7 +448,9 @@ export default function AddLoan() {
             />
           </div>
 
-          {/* LOAN AMOUNT */}
+          {/* =====================================================
+              LOAN AMOUNT
+          ===================================================== */}
 
           <div className="form-field">
             <label>
@@ -367,7 +471,9 @@ export default function AddLoan() {
             />
           </div>
 
-          {/* PERIOD */}
+          {/* =====================================================
+              PERIOD
+          ===================================================== */}
 
           <div className="form-field">
             <label>
@@ -388,7 +494,9 @@ export default function AddLoan() {
             />
           </div>
 
-          {/* INTEREST RATE */}
+          {/* =====================================================
+              INTEREST RATE
+          ===================================================== */}
 
           <div className="form-field">
             <label>
@@ -410,7 +518,9 @@ export default function AddLoan() {
             />
           </div>
 
-          {/* INTEREST AMOUNT */}
+          {/* =====================================================
+              INTEREST AMOUNT
+          ===================================================== */}
 
           <div className="form-field">
             <label>
@@ -432,7 +542,9 @@ export default function AddLoan() {
             />
           </div>
 
-          {/* INTEREST TAKEN */}
+          {/* =====================================================
+              INTEREST TAKEN
+          ===================================================== */}
 
           <div className="form-field">
             <label>
@@ -476,7 +588,9 @@ export default function AddLoan() {
             </div>
           </div>
 
-          {/* AMOUNT GIVEN */}
+          {/* =====================================================
+              AMOUNT GIVEN
+          ===================================================== */}
 
           <div className="form-field">
             <label>
@@ -498,11 +612,15 @@ export default function AddLoan() {
             />
           </div>
 
-          {/* TOTAL REPAYMENT */}
+          {/* =====================================================
+              TOTAL REPAYMENT / PRINCIPAL
+          ===================================================== */}
 
           <div className="form-field">
             <label>
-              Total Repayment
+              {loanType === "IO"
+                ? "Principal Amount"
+                : "Total Repayment"}
             </label>
 
             <input
@@ -520,7 +638,9 @@ export default function AddLoan() {
             />
           </div>
 
-          {/* COLLECTION AMOUNT */}
+          {/* =====================================================
+              COLLECTION AMOUNT
+          ===================================================== */}
 
           <div className="form-field">
             <label>
@@ -542,50 +662,128 @@ export default function AddLoan() {
             />
           </div>
 
+          {/* =====================================================
+              PRINCIPAL PENDING
+          ===================================================== */}
+
+          {loanType === "IO" && (
+            <div className="form-field">
+              <label>
+                Principal Pending
+              </label>
+
+              <input
+                value={
+                  "₹" +
+                  principalPending.toLocaleString(
+                    "en-IN",
+                    {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    }
+                  )
+                }
+                readOnly
+              />
+            </div>
+          )}
+
         </div>
 
-        {/* SUMMARY */}
+        {/* =====================================================
+            SUMMARY
+        ===================================================== */}
 
         <div className="loan-summary-card">
+
           <div className="loan-summary-title">
             Loan Summary
           </div>
 
           <div className="loan-summary-grid">
+
             <div className="loan-summary-item">
-              <span>Loan Amount</span>
+              <span>
+                Loan Amount
+              </span>
+
               <strong>
-                ₹{amount.toLocaleString("en-IN")}
+                ₹{amount.toLocaleString(
+                  "en-IN"
+                )}
               </strong>
             </div>
 
             <div className="loan-summary-item">
-              <span>Interest</span>
+              <span>
+                Loan Type
+              </span>
+
               <strong>
-                ₹{interestAmount.toLocaleString("en-IN")}
+                {loanType}
               </strong>
             </div>
 
             <div className="loan-summary-item">
-              <span>Amount Given</span>
+              <span>
+                Interest
+              </span>
+
               <strong>
-                ₹{amountGiven.toLocaleString("en-IN")}
+                ₹{interestAmount.toLocaleString(
+                  "en-IN"
+                )}
               </strong>
             </div>
 
             <div className="loan-summary-item">
-              <span>{collectionLabel}</span>
+              <span>
+                Amount Given
+              </span>
+
+              <strong>
+                ₹{amountGiven.toLocaleString(
+                  "en-IN"
+                )}
+              </strong>
+            </div>
+
+            {loanType === "IO" && (
+              <div className="loan-summary-item">
+                <span>
+                  Principal Pending
+                </span>
+
+                <strong>
+                  ₹{principalPending.toLocaleString(
+                    "en-IN"
+                  )}
+                </strong>
+              </div>
+            )}
+
+            <div className="loan-summary-item">
+              <span>
+                {collectionLabel}
+              </span>
+
               <strong className="loan-summary-highlight">
-                ₹{collectionAmount.toLocaleString("en-IN", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
+                ₹{collectionAmount.toLocaleString(
+                  "en-IN",
+                  {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  }
+                )}
               </strong>
             </div>
+
           </div>
         </div>
 
-        {/* ACTIONS */}
+        {/* =====================================================
+            ACTIONS
+        ===================================================== */}
 
         <div className="customer-actions">
 
@@ -619,6 +817,7 @@ export default function AddLoan() {
 
       {showSuccess && (
         <div className="loan-success-overlay">
+
           <div className="loan-success-modal">
 
             <div className="loan-success-icon-wrap">
@@ -627,12 +826,18 @@ export default function AddLoan() {
               </div>
             </div>
 
-            <h2>Loan Created</h2>
+            <h2>
+              Loan Created
+            </h2>
 
             <p className="loan-success-message">
               New loan has been added successfully for{" "}
               <strong>
-                {customerRecord.customer.name}
+                {
+                  customerRecord
+                    .customer
+                    .name
+                }
               </strong>
               .
             </p>
@@ -640,42 +845,91 @@ export default function AddLoan() {
             <div className="loan-success-details">
 
               <div className="loan-success-row">
-                <span>Loan ID</span>
-                <strong>{loanId}</strong>
-              </div>
+                <span>
+                  Loan ID
+                </span>
 
-              <div className="loan-success-divider" />
-
-              <div className="loan-success-row">
-                <span>Amount Given</span>
                 <strong>
-                  ₹{amountGiven.toLocaleString("en-IN")}
+                  {loanId}
                 </strong>
               </div>
 
               <div className="loan-success-divider" />
 
               <div className="loan-success-row">
-                <span>{collectionLabel}</span>
+                <span>
+                  Loan Type
+                </span>
+
                 <strong>
-                  ₹{collectionAmount.toLocaleString("en-IN", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
+                  {loanType}
                 </strong>
               </div>
+
+              <div className="loan-success-divider" />
+
+              <div className="loan-success-row">
+                <span>
+                  Amount Given
+                </span>
+
+                <strong>
+                  ₹{amountGiven.toLocaleString(
+                    "en-IN"
+                  )}
+                </strong>
+              </div>
+
+              <div className="loan-success-divider" />
+
+              <div className="loan-success-row">
+                <span>
+                  {collectionLabel}
+                </span>
+
+                <strong>
+                  ₹{collectionAmount.toLocaleString(
+                    "en-IN",
+                    {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    }
+                  )}
+                </strong>
+              </div>
+
+              {loanType === "IO" && (
+                <>
+                  <div className="loan-success-divider" />
+
+                  <div className="loan-success-row">
+                    <span>
+                      Principal Pending
+                    </span>
+
+                    <strong>
+                      ₹{principalPending.toLocaleString(
+                        "en-IN"
+                      )}
+                    </strong>
+                  </div>
+                </>
+              )}
 
             </div>
 
             <button
               type="button"
               className="primary loan-success-button"
-              onClick={handleSuccessDone}
+              onClick={
+                handleSuccessDone
+              }
             >
               View Customer
             </button>
 
           </div>
+
         </div>
       )}
 

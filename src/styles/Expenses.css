@@ -550,3 +550,123 @@ button:disabled {
     overflow-y: auto;
   }
 }
+
+/* =========================================================
+   EXPENSES / REPORTS - DARK FINTECH THEME
+========================================================= */
+.expenses-page {
+  color: #dce7ef !important;
+}
+
+.expenses-topbar h1,
+.expense-panel-heading h2,
+.expense-panel-heading > strong,
+.expense-summary-strip strong,
+.expense-report-total strong,
+.expense-modal-title h3,
+.expense-delete-modal h3,
+.expense-auto-agent strong,
+.expense-empty-state strong {
+  color: #f5f9fc !important;
+}
+
+.expenses-desktop-subtitle,
+.expense-summary-strip span,
+.expense-panel-heading span,
+.expense-report-total span,
+.expense-report-filters label > span,
+.expense-modal-title span,
+.expense-modal-field > span,
+.expense-auto-agent > span,
+.expense-auto-agent small,
+.expense-empty-state span,
+.expense-delete-modal p {
+  color: #8298aa !important;
+}
+
+.expense-summary-strip > div,
+.expense-content-panel,
+.expense-form-modal,
+.expense-delete-modal,
+.expense-report-total,
+.expense-auto-agent {
+  background: linear-gradient(180deg, rgba(11,33,52,.98), rgba(8,27,44,.98)) !important;
+  border-color: rgba(148,181,204,.13) !important;
+  color: #dce7ef !important;
+  box-shadow: 0 12px 32px rgba(0,0,0,.16) !important;
+}
+
+.expense-tabs {
+  background: rgba(255,255,255,.035) !important;
+  border: 1px solid rgba(148,181,204,.08);
+}
+
+.expense-tabs button {
+  background: transparent !important;
+  color: #8298aa !important;
+}
+
+.expense-tabs button.active {
+  background: rgba(22,214,197,.10) !important;
+  color: #39dfd0 !important;
+  box-shadow: inset 0 -2px 0 #16d6c5 !important;
+}
+
+.expense-table th {
+  background: rgba(255,255,255,.035) !important;
+  color: #8fa4b5 !important;
+}
+
+.expense-table td {
+  color: #dce7ef !important;
+  border-color: rgba(148,181,204,.08) !important;
+}
+
+.expense-money {
+  color: #ff7f87 !important;
+}
+
+.expense-edit-btn,
+.expense-delete-btn,
+.expense-clear-btn,
+.expense-download-button,
+.expense-modal-title button {
+  background: rgba(255,255,255,.035) !important;
+  border-color: rgba(148,181,204,.14) !important;
+}
+
+.expense-edit-btn,
+.expense-download-button {
+  color: #8fcfff !important;
+}
+
+.expense-delete-btn,
+.expense-clear-btn,
+.expense-confirm-delete-btn {
+  color: #ff7f87 !important;
+}
+
+.expense-add-button,
+.expense-save-button {
+  background: linear-gradient(180deg,#18cdbc,#0eaa9d) !important;
+  border-color: #16d6c5 !important;
+  color: #041b20 !important;
+}
+
+.expense-report-filters input,
+.expense-report-filters select,
+.expense-modal-field input {
+  background: rgba(4,20,33,.88) !important;
+  color: #eef5f9 !important;
+  border-color: rgba(148,181,204,.14) !important;
+}
+
+.expense-modal-backdrop {
+  background: rgba(1,9,16,.72) !important;
+  backdrop-filter: blur(7px);
+}
+
+.expense-delete-icon {
+  background: rgba(255,102,112,.11) !important;
+  color: #ff7f87 !important;
+}

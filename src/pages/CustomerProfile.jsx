@@ -262,14 +262,29 @@ function getLoanHistoryStats(loan) {
         ) > 0
     ).length;
 
+  /*
+    Pending Count should represent the CURRENT pending amount,
+    not the number of old payment-history rows that once had pending.
+  */
+
+  const currentPending =
+    Number(
+      loan?.pendingDue || 0
+    );
+
+  const currentDueAmount =
+    Number(
+      loan?.collectionAmount || 0
+    );
+
   const pendingCount =
-    duePayments.filter(
-      (payment) =>
-        Number(
-          payment.pendingAfter ||
-            0
-        ) > 0
-    ).length;
+    currentPending > 0 &&
+    currentDueAmount > 0
+      ? Math.ceil(
+          currentPending /
+            currentDueAmount
+        )
+      : 0;
 
   /*
     For now a payment is counted as late
@@ -456,6 +471,13 @@ export default function CustomerProfile() {
     setRecord,
   ] = useState(null);
 
+  /* LOAN SLOT ACCORDION */
+
+  const [
+    expandedLoanSlots,
+    setExpandedLoanSlots,
+  ] = useState({});
+
   /* PHOTOS */
 
   const [
@@ -491,6 +513,58 @@ export default function CustomerProfile() {
   useEffect(() => {
     reloadCustomer();
   }, [customerId]);
+
+  useEffect(() => {
+    const loans =
+      record?.loans || [];
+
+    if (loans.length === 0) {
+      return;
+    }
+
+    setExpandedLoanSlots(
+      (current) => {
+        const next = {
+          ...current,
+        };
+
+        loans.forEach(
+          (loan) => {
+            if (
+              Object.prototype.hasOwnProperty.call(
+                next,
+                loan.loanId
+              )
+            ) {
+              return;
+            }
+
+            /*
+              Active loan = open by default.
+              Closed / Preclosed loan = collapsed by default.
+            */
+            next[loan.loanId] =
+              loan.status ===
+              "Active";
+          }
+        );
+
+        return next;
+      }
+    );
+  }, [record]);
+
+  const toggleLoanSlot =
+    (loanId) => {
+      setExpandedLoanSlots(
+        (current) => ({
+          ...current,
+
+          [loanId]:
+            !current[loanId],
+        })
+      );
+    };
 
   /* =========================================================
      LOAD PHOTOS
@@ -1504,20 +1578,36 @@ export default function CustomerProfile() {
                     ? "Preclose"
                     : "Due Closed";
 
+                const isExpanded =
+                  expandedLoanSlots[
+                    loan.loanId
+                  ] ??
+                  (
+                    loan.status ===
+                    "Active"
+                  );
+
                 return (
                   <article
-                    className="loan-slot-card"
+                    className={
+                      "loan-slot-card " +
+                      (
+                        isExpanded
+                          ? "loan-slot-expanded"
+                          : "loan-slot-collapsed"
+                      )
+                    }
 
                     key={
                       loan.loanId
                     }
                   >
 
-                    {/* LOAN HEADER */}
+                    {/* LOAN HEADER / DROPDOWN */}
 
-                    <div className="loan-slot-header">
+                    <div className="loan-slot-header loan-slot-accordion-header">
 
-                      <div>
+                      <div className="loan-slot-title-area">
 
                         <span className="loan-slot-number">
                           Loan Slot{" "}
@@ -1545,380 +1635,438 @@ export default function CustomerProfile() {
 
                       </div>
 
-                      <span
-                        className={`status-badge ${String(
-                          loan.status ||
-                            "Active"
-                        ).toLowerCase()}`}
-                      >
-                        {loan.status ||
-                          "Active"}
-                      </span>
+                      <div className="loan-slot-header-controls">
 
-                    </div>
+                        <div className="loan-slot-collapsed-summary">
 
-                    {/* COUNTS */}
+                          <span>
+                            ₹
+                            {formatMoney(
+                              loan.loanAmount
+                            )}
+                          </span>
 
-                    {(stats.outstandingCount >
-                      0 ||
-                      stats.paidCount >
-                        0 ||
-                      stats.pendingCount >
-                        0 ||
-                      stats.finePaidCount >
-                        0) && (
+                          <small>
+                            {loan.cycle || "-"}
+                          </small>
 
-                      <div className="loan-count-summary">
+                        </div>
 
-                        {stats.outstandingCount >
-                          0 && (
-                          <div>
-
-                            <span>
-                              Outstanding Count
-                            </span>
-
-                            <strong>
-                              {
-                                stats.outstandingCount
-                              }
-                            </strong>
-
-                          </div>
-                        )}
-
-                        {stats.paidCount >
-                          0 && (
-                          <div>
-
-                            <span>
-                              Paid Count
-                            </span>
-
-                            <strong>
-                              {
-                                stats.paidCount
-                              }
-                            </strong>
-
-                          </div>
-                        )}
-
-                        {stats.pendingCount >
-                          0 && (
-                          <div>
-
-                            <span>
-                              Pending Count
-                            </span>
-
-                            <strong>
-                              {
-                                stats.pendingCount
-                              }
-                            </strong>
-
-                          </div>
-                        )}
-
-                        {stats.finePaidCount >
-                          0 && (
-                          <div>
-
-                            <span>
-                              Fine Paid Count
-                            </span>
-
-                            <strong>
-                              {
-                                stats.finePaidCount
-                              }
-                            </strong>
-
-                          </div>
-                        )}
-
-                      </div>
-                    )}
-
-                    {/* LOAN DETAILS */}
-
-                    <div className="loan-slot-grid">
-
-                      <div>
-
-                        <span>
-                          Loan Amount
+                        <span
+                          className={`status-badge ${String(
+                            loan.status ||
+                              "Active"
+                          ).toLowerCase()}`}
+                        >
+                          {loan.status ||
+                            "Active"}
                         </span>
 
-                        <b>
-                          ₹
-                          {formatMoney(
-                            loan.loanAmount
-                          )}
-                        </b>
+                        <button
+                          type="button"
 
-                      </div>
-
-                      <div>
-
-                        <span>
-                          Cycle
-                        </span>
-
-                        <b>
-                          {getLoanCycleDisplay(
-                            loan
-                          )}
-                        </b>
-
-                      </div>
-
-                      <div>
-
-                        <span>
-                          Loan Type
-                        </span>
-
-                        <b>
-                          {
-                            loan.loanType ||
-                            "-"
+                          className={
+                            "loan-slot-toggle-button " +
+                            (
+                              isExpanded
+                                ? "open"
+                                : ""
+                            )
                           }
-                        </b>
 
-                      </div>
-
-                      <div>
-
-                        <span>
-                          Interest Rate
-                        </span>
-
-                        <b>
-                          {Number(
-                            loan.interestRate ||
-                              0
-                          )}
-                          %
-                        </b>
-
-                      </div>
-
-                      <div>
-
-                        <span>
-                          Duration
-                        </span>
-
-                        <b>
-                          {
-                            loan.duration ||
-                            0
-                          }{" "}
-                          {
-                            loan.durationUnit ||
-                            ""
+                          aria-label={
+                            isExpanded
+                              ? `Collapse ${loan.loanId}`
+                              : `Expand ${loan.loanId}`
                           }
-                        </b>
 
-                      </div>
+                          aria-expanded={
+                            isExpanded
+                          }
 
-                      <div>
-
-                        <span>
-                          Due Amount
-                        </span>
-
-                        <b>
-                          ₹
-                          {formatMoney(
-                            loan.collectionAmount
-                          )}
-                        </b>
-
-                      </div>
-
-                      <div>
-
-                        <span>
-                          Outstanding
-                        </span>
-
-                        <b>
-                          ₹
-                          {formatMoney(
-                            outstanding
-                          )}
-                        </b>
-
-                      </div>
-
-                      <div>
-
-                        <span>
-                          Pending
-                        </span>
-
-                        <b>
-                          ₹
-                          {formatMoney(
-                            pending
-                          )}
-                        </b>
-
-                      </div>
-
-                      <div>
-
-                        <span>
-                          Fine Pending
-                        </span>
-
-                        <b>
-                          ₹
-                          {formatMoney(
-                            finePending
-                          )}
-                        </b>
-
-                      </div>
-
-                      <div>
-
-                        <span>
-                          Fine Paid
-                        </span>
-
-                        <b>
-                          ₹
-                          {formatMoney(
-                            finePaid
-                          )}
-                        </b>
+                          onClick={() =>
+                            toggleLoanSlot(
+                              loan.loanId
+                            )
+                          }
+                        >
+                          ⌄
+                        </button>
 
                       </div>
 
                     </div>
 
-                    {/* CLOSED LOAN */}
+                    {isExpanded && (
 
-                    {isClosed && (
+                      <div className="loan-slot-expand-content">
 
-                      <div className="closed-loan-summary">
+                        {/* COUNTS */}
 
-                        <div>
+                        {(stats.outstandingCount >
+                          0 ||
+                          stats.paidCount >
+                            0 ||
+                          stats.pendingCount >
+                            0 ||
+                          stats.finePaidCount >
+                            0) && (
 
-                          <span>
-                            Late Payment Count
-                          </span>
+                          <div className="loan-count-summary">
 
-                          <strong>
-                            {
-                              stats.latePaymentCount
-                            }
-                          </strong>
+                            {stats.outstandingCount >
+                              0 && (
+                              <div>
 
-                        </div>
+                                <span>
+                                  Outstanding Count
+                                </span>
 
-                        <div>
+                                <strong>
+                                  {
+                                    stats.outstandingCount
+                                  }
+                                </strong>
 
-                          <span>
-                            Total Fine Paid
-                          </span>
-
-                          <strong>
-                            ₹
-                            {formatMoney(
-                              stats.totalFinePaid
+                              </div>
                             )}
-                          </strong>
 
-                        </div>
+                            {stats.paidCount >
+                              0 && (
+                              <div>
 
-                        <div>
+                                <span>
+                                  Paid Count
+                                </span>
 
-                          <span>
-                            Total Amount Received
-                          </span>
+                                <strong>
+                                  {
+                                    stats.paidCount
+                                  }
+                                </strong>
 
-                          <strong>
-                            ₹
-                            {formatMoney(
-                              stats.totalAmountReceived
+                              </div>
                             )}
-                          </strong>
 
-                        </div>
+                            {stats.pendingCount >
+                              0 && (
+                              <div>
 
-                        <div>
+                                <span>
+                                  Pending Count
+                                </span>
 
-                          <span>
-                            Close Type
-                          </span>
+                                <strong>
+                                  {
+                                    stats.pendingCount
+                                  }
+                                </strong>
 
-                          <strong>
-                            {
-                              closeType
-                            }
-                          </strong>
-
-                        </div>
-
-                        <div>
-
-                          <span>
-                            Closed On
-                          </span>
-
-                          <strong>
-                            {formatDate(
-                              loan.preclosedAt ||
-                                loan.closedAt
+                              </div>
                             )}
-                          </strong>
+
+                            {stats.finePaidCount >
+                              0 && (
+                              <div>
+
+                                <span>
+                                  Fine Paid Count
+                                </span>
+
+                                <strong>
+                                  {
+                                    stats.finePaidCount
+                                  }
+                                </strong>
+
+                              </div>
+                            )}
+
+                          </div>
+                        )}
+
+                        {/* LOAN DETAILS */}
+
+                        <div className="loan-slot-grid">
+
+                          <div>
+
+                            <span>
+                              Loan Amount
+                            </span>
+
+                            <b>
+                              ₹
+                              {formatMoney(
+                                loan.loanAmount
+                              )}
+                            </b>
+
+                          </div>
+
+                          <div>
+
+                            <span>
+                              Cycle
+                            </span>
+
+                            <b>
+                              {getLoanCycleDisplay(
+                                loan
+                              )}
+                            </b>
+
+                          </div>
+
+                          <div>
+
+                            <span>
+                              Loan Type
+                            </span>
+
+                            <b>
+                              {
+                                loan.loanType ||
+                                "-"
+                              }
+                            </b>
+
+                          </div>
+
+                          <div>
+
+                            <span>
+                              Interest Rate
+                            </span>
+
+                            <b>
+                              {Number(
+                                loan.interestRate ||
+                                  0
+                              )}
+                              %
+                            </b>
+
+                          </div>
+
+                          <div>
+
+                            <span>
+                              Duration
+                            </span>
+
+                            <b>
+                              {
+                                loan.duration ||
+                                0
+                              }{" "}
+                              {
+                                loan.durationUnit ||
+                                ""
+                              }
+                            </b>
+
+                          </div>
+
+                          <div>
+
+                            <span>
+                              Due Amount
+                            </span>
+
+                            <b>
+                              ₹
+                              {formatMoney(
+                                loan.collectionAmount
+                              )}
+                            </b>
+
+                          </div>
+
+                          <div>
+
+                            <span>
+                              Outstanding
+                            </span>
+
+                            <b>
+                              ₹
+                              {formatMoney(
+                                outstanding
+                              )}
+                            </b>
+
+                          </div>
+
+                          <div>
+
+                            <span>
+                              Pending
+                            </span>
+
+                            <b>
+                              ₹
+                              {formatMoney(
+                                pending
+                              )}
+                            </b>
+
+                          </div>
+
+                          <div>
+
+                            <span>
+                              Fine Pending
+                            </span>
+
+                            <b>
+                              ₹
+                              {formatMoney(
+                                finePending
+                              )}
+                            </b>
+
+                          </div>
+
+                          <div>
+
+                            <span>
+                              Fine Paid
+                            </span>
+
+                            <b>
+                              ₹
+                              {formatMoney(
+                                finePaid
+                              )}
+                            </b>
+
+                          </div>
 
                         </div>
+
+                        {/* CLOSED LOAN */}
+
+                        {isClosed && (
+
+                          <div className="closed-loan-summary">
+
+                            <div>
+
+                              <span>
+                                Late Payment Count
+                              </span>
+
+                              <strong>
+                                {
+                                  stats.latePaymentCount
+                                }
+                              </strong>
+
+                            </div>
+
+                            <div>
+
+                              <span>
+                                Total Fine Paid
+                              </span>
+
+                              <strong>
+                                ₹
+                                {formatMoney(
+                                  stats.totalFinePaid
+                                )}
+                              </strong>
+
+                            </div>
+
+                            <div>
+
+                              <span>
+                                Total Amount Received
+                              </span>
+
+                              <strong>
+                                ₹
+                                {formatMoney(
+                                  stats.totalAmountReceived
+                                )}
+                              </strong>
+
+                            </div>
+
+                            <div>
+
+                              <span>
+                                Close Type
+                              </span>
+
+                              <strong>
+                                {
+                                  closeType
+                                }
+                              </strong>
+
+                            </div>
+
+                            <div>
+
+                              <span>
+                                Closed On
+                              </span>
+
+                              <strong>
+                                {formatDate(
+                                  loan.preclosedAt ||
+                                    loan.closedAt
+                                )}
+                              </strong>
+
+                            </div>
+
+                          </div>
+                        )}
+
+                        {/* ACTIONS */}
+
+                        {loan.status ===
+                          "Active" && (
+
+                          <div className="loan-slot-actions">
+
+                            <button
+                              type="button"
+
+                              className="primary pay-now-button"
+
+                              onClick={() =>
+                                openPayment(
+                                  loan
+                                )
+                              }
+                            >
+                              Pay
+                            </button>
+
+                            <button
+                              type="button"
+
+                              className="preclose-button"
+
+                              onClick={() =>
+                                handlePreclose(
+                                  loan
+                                )
+                              }
+                            >
+                              Preclose
+                            </button>
+
+                          </div>
+                        )}
 
                       </div>
-                    )}
 
-                    {/* ACTIONS */}
-
-                    {loan.status ===
-                      "Active" && (
-
-                      <div className="loan-slot-actions">
-
-                        <button
-                          type="button"
-
-                          className="primary pay-now-button"
-
-                          onClick={() =>
-                            openPayment(
-                              loan
-                            )
-                          }
-                        >
-                          Pay
-                        </button>
-
-                        <button
-                          type="button"
-
-                          className="preclose-button"
-
-                          onClick={() =>
-                            handlePreclose(
-                              loan
-                            )
-                          }
-                        >
-                          Preclose
-                        </button>
-
-                      </div>
                     )}
 
                   </article>
@@ -1930,6 +2078,7 @@ export default function CustomerProfile() {
         )}
 
       </div>
+
 
       {/* =====================================================
           PAYMENT HISTORY

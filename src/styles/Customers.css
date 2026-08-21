@@ -790,3 +790,210 @@
   }
 
 }
+/* =========================================================
+   CUSTOMERS - DARK FINTECH THEME
+========================================================= */
+.customer-list-card,
+.customer-payment-modal {
+  background: linear-gradient(180deg, rgba(11,33,52,.98), rgba(8,27,44,.98)) !important;
+  border-color: rgba(148,181,204,.13) !important;
+  color: #dce7ef !important;
+  box-shadow: 0 12px 30px rgba(0,0,0,.16) !important;
+}
+
+.customer-list-card:hover {
+  border-color: rgba(22,214,197,.28) !important;
+  box-shadow: 0 16px 36px rgba(0,0,0,.23) !important;
+}
+
+.customer-list-photo {
+  background: rgba(22,214,197,.10) !important;
+  color: #3ee2d3 !important;
+  border: 1px solid rgba(22,214,197,.16);
+}
+
+.customer-list-info h3,
+.customer-loan-info b,
+.empty-customers h3,
+.customer-payment-header h3,
+.customer-payment-summary b {
+  color: #f5f9fc !important;
+}
+
+.customer-list-info p,
+.customer-loan-info span,
+.customer-payment-header p,
+.customer-payment-summary span,
+.customer-payment-field span,
+.empty-customers {
+  color: #8298aa !important;
+}
+
+.customer-loan-info > div,
+.customer-payment-summary > div {
+  background: rgba(255,255,255,.025) !important;
+  border-color: rgba(148,181,204,.09) !important;
+}
+
+.customer-pay-btn,
+.customer-payment-confirm {
+  background: linear-gradient(180deg,#18cdbc,#0eaa9d) !important;
+  border-color: #16d6c5 !important;
+  color: #041b20 !important;
+  box-shadow: 0 6px 16px rgba(22,214,197,.13) !important;
+}
+
+.customer-pay-btn:hover,
+.customer-payment-confirm:hover {
+  background: linear-gradient(180deg,#2fe0d0,#13b7a9) !important;
+}
+
+.customer-view-btn,
+.customer-payment-close {
+  background: rgba(15,51,76,.72) !important;
+  border-color: rgba(83,157,211,.24) !important;
+  color: #75c4ff !important;
+}
+
+.customer-view-btn:hover,
+.customer-payment-close:hover {
+  background: rgba(22,214,197,.09) !important;
+  border-color: rgba(22,214,197,.30) !important;
+  color: #3ee2d3 !important;
+}
+
+.customer-payment-backdrop {
+  background: rgba(1,9,16,.72) !important;
+  backdrop-filter: blur(7px);
+}
+
+.customer-payment-header {
+  border-bottom-color: rgba(148,181,204,.10) !important;
+}
+
+.customer-payment-tabs {
+  background: rgba(255,255,255,.035) !important;
+}
+
+.customer-payment-tabs button {
+  background: transparent !important;
+  border-color: transparent !important;
+  color: #8298aa !important;
+}
+
+.customer-payment-tabs button.active {
+  background: rgba(22,214,197,.10) !important;
+  border-color: rgba(22,214,197,.18) !important;
+  color: #39dfd0 !important;
+}
+
+.customer-payment-field input {
+  background: rgba(4,20,33,.88) !important;
+  color: #f0f6fa !important;
+  border-color: rgba(148,181,204,.14) !important;
+}
+/* =========================================================
+   CUSTOMER SEARCH
+========================================================= */
+
+.customer-list-title {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+
+  gap: 20px;
+}
+
+.customer-search-box {
+  width: min(320px, 100%);
+
+  height: 42px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 9px;
+
+  padding: 0 12px;
+
+  border: 1px solid rgba(148, 181, 204, 0.14);
+  border-radius: 10px;
+
+  background: rgba(4, 20, 33, 0.82);
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.customer-search-box:focus-within {
+  border-color: rgba(22, 214, 197, 0.45);
+
+  box-shadow:
+    0 0 0 3px rgba(22, 214, 197, 0.07);
+}
+
+.customer-search-icon {
+  color: #5fded2;
+  font-size: 18px;
+}
+
+.customer-search-box input {
+  flex: 1;
+  min-width: 0;
+
+  border: 0;
+  outline: 0;
+
+  background: transparent;
+
+  color: #f5f9fc;
+
+  font: inherit;
+  font-size: 12px;
+}
+
+.customer-search-box input::placeholder {
+  color: #657f92;
+}
+
+.customer-search-box button {
+  width: 26px;
+  height: 26px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 0;
+  border-radius: 7px;
+
+  background: rgba(255, 255, 255, 0.04);
+
+  color: #8ca2b2;
+
+  font-size: 17px;
+
+  cursor: pointer;
+}
+
+.customer-search-box button:hover {
+  background: rgba(255, 102, 112, 0.08);
+
+  color: #ff747d;
+}
+
+
+/* MOBILE */
+
+@media (max-width: 750px) {
+
+  .customer-list-title {
+    flex-direction: column;
+  }
+
+  .customer-search-box {
+    width: 100%;
+  }
+
+}

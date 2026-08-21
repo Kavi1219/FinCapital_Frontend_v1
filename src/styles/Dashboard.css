@@ -319,6 +319,7 @@
    ========================================================= */
 
 .dashboard-page .dashboard-collection-panel,
+.dashboard-page .dashboard-collected-panel,
 .dashboard-page .dashboard-upcoming-panel {
   width: 100%;
   margin-bottom: 20px;
@@ -528,6 +529,18 @@
   transform: translateY(-1px);
 }
 
+.dashboard-page .dashboard-pay-btn:disabled,
+.dashboard-page .dashboard-pay-btn:disabled:hover {
+  background: #d9e2ea;
+  border-color: #d9e2ea;
+  color: #8a9aaa;
+
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+  opacity: 0.8;
+}
+
 .dashboard-page .dashboard-view-btn {
   border: 1px solid #ccd9e3;
   background: #ffffff;
@@ -546,6 +559,120 @@
 
 .dashboard-page .dashboard-mobile-list {
   display: none;
+}
+
+/* =========================================================
+   TODAY'S COLLECTED
+   ========================================================= */
+
+.dashboard-page .dashboard-collected-panel {
+  overflow: hidden;
+}
+
+.dashboard-page .dashboard-collected-head {
+  min-height: 70px;
+}
+
+.dashboard-page .dashboard-collected-toggle {
+  min-width: 82px;
+  height: 40px;
+
+  padding: 0 10px 0 12px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+
+  border: 1px solid var(--dash-border);
+  border-radius: 9px;
+
+  background: #ffffff;
+  color: var(--dash-navy);
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.dashboard-page .dashboard-collected-toggle:hover {
+  background: var(--dash-green-soft);
+  border-color: #b9dfcf;
+
+  box-shadow:
+    0 4px 12px rgba(22, 132, 91, 0.08);
+}
+
+.dashboard-page .dashboard-collected-count {
+  min-width: 25px;
+  height: 25px;
+
+  padding: 0 7px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 20px;
+
+  background: var(--dash-green-soft);
+  color: var(--dash-green);
+
+  font-size: 10px;
+  font-weight: 750;
+}
+
+.dashboard-page .dashboard-collected-chevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  color: #6d8193;
+
+  font-size: 18px;
+  line-height: 1;
+
+  transform: rotate(0deg);
+  transition: transform 0.2s ease;
+}
+
+.dashboard-page .dashboard-collected-chevron.open {
+  transform: rotate(180deg);
+}
+
+.dashboard-page .dashboard-status.collected {
+  background: var(--dash-green-soft);
+  color: var(--dash-green);
+}
+
+.dashboard-page .dashboard-collected-amount {
+  color: var(--dash-green) !important;
+}
+
+.dashboard-page .dashboard-collected-empty {
+  min-height: 92px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 20px;
+
+  color: var(--dash-muted);
+
+  font-size: 11px;
+  font-weight: 600;
+
+  border-top: 1px solid #edf1f4;
+}
+
+.dashboard-page .dashboard-collected-table {
+  border-top: 0;
+}
+
+.dashboard-page .dashboard-collected-card {
+  border-left: 3px solid var(--dash-green);
 }
 
 /* =========================================================
@@ -1422,6 +1549,16 @@
     font-size: 14px;
   }
 
+  .dashboard-page .dashboard-collected-head {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .dashboard-page .dashboard-collected-toggle {
+    min-width: 72px;
+    height: 36px;
+  }
+
   .dashboard-page .dashboard-cycle-tabs {
     width: 100%;
   }
@@ -1712,6 +1849,669 @@
   .dashboard-page .dashboard-upcoming-right {
     padding-left: 0;
     margin-top: 2px;
+  }
+
+}
+
+/* =========================================================
+   FIN CAPITAL - DARK FINTECH THEME
+   Matches selected Design 2 / approved dashboard concept
+   Keep this block at the VERY BOTTOM of Dashboard.css
+========================================================= */
+
+.dashboard-page {
+  --dash-primary: #16d6c5;
+  --dash-primary-dark: #0fb6a8;
+  --dash-primary-soft: rgba(22, 214, 197, 0.12);
+
+  --dash-navy: #f4f8fb;
+  --dash-text: #dce7ef;
+  --dash-muted: #8298aa;
+
+  --dash-bg: #061727;
+  --dash-card: #0b2134;
+
+  --dash-border: rgba(148, 181, 204, 0.13);
+  --dash-border-strong: rgba(148, 181, 204, 0.22);
+
+  --dash-green: #27d39f;
+  --dash-green-soft: rgba(39, 211, 159, 0.11);
+
+  --dash-red: #ff6670;
+  --dash-red-soft: rgba(255, 102, 112, 0.11);
+
+  --dash-orange: #ffad42;
+  --dash-orange-soft: rgba(255, 173, 66, 0.12);
+
+  --dash-shadow: 0 10px 28px rgba(0, 0, 0, 0.16);
+  --dash-shadow-hover: 0 16px 36px rgba(0, 0, 0, 0.23);
+
+  background:
+    radial-gradient(
+      circle at 82% 6%,
+      rgba(22, 214, 197, 0.07),
+      transparent 25%
+    ),
+    radial-gradient(
+      circle at 22% 8%,
+      rgba(42, 109, 194, 0.08),
+      transparent 27%
+    ),
+    linear-gradient(
+      180deg,
+      #071b2d 0%,
+      #061624 100%
+    ) !important;
+
+  color: var(--dash-text);
+}
+
+/* =========================================================
+   TITLE / DATE
+========================================================= */
+
+.dashboard-page .dashboard-titlebar h1,
+.dashboard-page .dashboard-section-head h2 {
+  color: #f5f9fc;
+}
+
+.dashboard-page .dashboard-titlebar p,
+.dashboard-page .dashboard-section-head p {
+  color: #8298aa;
+}
+
+.dashboard-page .dashboard-date,
+.dashboard-page .dashboard-more-button {
+  background: rgba(11, 33, 52, 0.86);
+  border-color: var(--dash-border);
+  color: #dce7ef;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025);
+}
+
+.dashboard-page .dashboard-more-button:hover {
+  background: rgba(22, 214, 197, 0.09);
+  border-color: rgba(22, 214, 197, 0.28);
+  color: #2ce0cf;
+}
+
+/* =========================================================
+   SUMMARY CARDS
+========================================================= */
+
+.dashboard-page .dashboard-click-card {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(13, 39, 61, 0.96),
+      rgba(8, 29, 46, 0.96)
+    );
+
+  border-color: var(--dash-border);
+
+  box-shadow:
+    0 10px 28px rgba(0, 0, 0, 0.13),
+    inset 0 1px 0 rgba(255, 255, 255, 0.025);
+}
+
+.dashboard-page .dashboard-click-card::before {
+  width: 3px;
+  background: #18d5c4;
+}
+
+.dashboard-page .dashboard-click-card.green::before {
+  background: #27d39f;
+}
+
+.dashboard-page .dashboard-click-card.red::before {
+  background: #ff6670;
+}
+
+.dashboard-page .dashboard-click-card.orange::before {
+  background: #ffad42;
+}
+
+.dashboard-page .dashboard-click-card.navy::before {
+  background: #56a8ff;
+}
+
+.dashboard-page .dashboard-click-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(22, 214, 197, 0.24);
+  box-shadow:
+    0 16px 36px rgba(0, 0, 0, 0.22),
+    0 0 0 1px rgba(22, 214, 197, 0.035);
+}
+
+.dashboard-page .dashboard-card-copy span {
+  color: #91a4b5;
+}
+
+.dashboard-page .dashboard-card-copy b {
+  color: #ffffff;
+}
+
+.dashboard-page .dashboard-card-arrow {
+  background: rgba(22, 214, 197, 0.08);
+  color: #23d7c7;
+}
+
+.dashboard-page .dashboard-click-card:hover
+.dashboard-card-arrow {
+  background: rgba(22, 214, 197, 0.16);
+  color: #54eadc;
+}
+
+/* =========================================================
+   PANELS
+========================================================= */
+
+.dashboard-page .dashboard-collection-panel,
+.dashboard-page .dashboard-collected-panel,
+.dashboard-page .dashboard-upcoming-panel {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(9, 30, 48, 0.98),
+      rgba(7, 25, 41, 0.98)
+    );
+
+  border-color: var(--dash-border);
+
+  box-shadow:
+    0 12px 34px rgba(0, 0, 0, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.02);
+}
+
+.dashboard-page .dashboard-section-head {
+  border-bottom-color: rgba(148, 181, 204, 0.10);
+}
+
+/* =========================================================
+   CYCLE TABS
+========================================================= */
+
+.dashboard-page .dashboard-cycle-tabs {
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(148, 181, 204, 0.08);
+}
+
+.dashboard-page .dashboard-cycle-tabs button {
+  color: #8fa4b5;
+}
+
+.dashboard-page .dashboard-cycle-tabs button:hover {
+  color: #2fe0d0;
+}
+
+.dashboard-page .dashboard-cycle-tabs button.active {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(20, 60, 78, 0.96),
+      rgba(11, 47, 64, 0.96)
+    );
+
+  color: #37e4d4;
+
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.16),
+    inset 0 -2px 0 #16d6c5;
+}
+
+/* =========================================================
+   TABLES
+========================================================= */
+
+.dashboard-page .dashboard-desktop-table thead {
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.dashboard-page .dashboard-desktop-table th {
+  color: #8fa4b5;
+  border-bottom-color: rgba(148, 181, 204, 0.11);
+}
+
+.dashboard-page .dashboard-desktop-table td {
+  color: #d8e4ec;
+  border-bottom-color: rgba(148, 181, 204, 0.08);
+}
+
+.dashboard-page .dashboard-desktop-table tbody tr:hover {
+  background: rgba(22, 214, 197, 0.035);
+}
+
+.dashboard-page .dashboard-amount {
+  color: #ffffff !important;
+}
+
+/* =========================================================
+   STATUS
+========================================================= */
+
+.dashboard-page .dashboard-status.due {
+  background: rgba(22, 214, 197, 0.11);
+  color: #3ee2d3;
+}
+
+.dashboard-page .dashboard-status.pending {
+  background: rgba(255, 102, 112, 0.11);
+  color: #ff7e86;
+}
+
+.dashboard-page .dashboard-status.collected {
+  background: rgba(39, 211, 159, 0.11);
+  color: #45dfaE;
+}
+
+/* =========================================================
+   PAY / VIEW
+========================================================= */
+
+.dashboard-page .dashboard-pay-btn {
+  border-color: #16d6c5;
+  background:
+    linear-gradient(
+      180deg,
+      #18cdbc,
+      #0eaa9d
+    );
+
+  color: #041b20;
+
+  box-shadow:
+    0 5px 14px rgba(22, 214, 197, 0.12);
+}
+
+.dashboard-page .dashboard-pay-btn:hover {
+  background:
+    linear-gradient(
+      180deg,
+      #2fe0d0,
+      #13b7a9
+    );
+
+  border-color: #2fe0d0;
+
+  box-shadow:
+    0 7px 18px rgba(22, 214, 197, 0.18);
+}
+
+.dashboard-page .dashboard-pay-btn:disabled,
+.dashboard-page .dashboard-pay-btn:disabled:hover {
+  background: rgba(113, 135, 152, 0.18);
+  border-color: rgba(148, 181, 204, 0.09);
+  color: #718696;
+  opacity: 1;
+}
+
+.dashboard-page .dashboard-view-btn {
+  border-color: rgba(83, 157, 211, 0.24);
+  background: rgba(15, 51, 76, 0.74);
+  color: #75c4ff;
+}
+
+.dashboard-page .dashboard-view-btn:hover {
+  border-color: rgba(22, 214, 197, 0.34);
+  background: rgba(22, 214, 197, 0.09);
+  color: #3ee2d3;
+}
+
+/* =========================================================
+   TODAY'S COLLECTED
+========================================================= */
+
+.dashboard-page .dashboard-collected-toggle {
+  border-color: var(--dash-border);
+  background: rgba(255, 255, 255, 0.035);
+  color: #dce7ef;
+}
+
+.dashboard-page .dashboard-collected-toggle:hover {
+  background: rgba(39, 211, 159, 0.08);
+  border-color: rgba(39, 211, 159, 0.22);
+}
+
+.dashboard-page .dashboard-collected-count {
+  background: rgba(39, 211, 159, 0.11);
+  color: #45dfae;
+}
+
+.dashboard-page .dashboard-collected-chevron {
+  color: #8fa4b5;
+}
+
+.dashboard-page .dashboard-collected-empty {
+  color: #8298aa;
+  border-top-color: rgba(148, 181, 204, 0.08);
+}
+
+.dashboard-page .dashboard-collected-card {
+  border-left-color: #27d39f;
+}
+
+/* =========================================================
+   UPCOMING
+========================================================= */
+
+.dashboard-page .dashboard-upcoming-item {
+  border-bottom-color: rgba(148, 181, 204, 0.08);
+}
+
+.dashboard-page .dashboard-upcoming-date {
+  background: rgba(86, 168, 255, 0.09);
+  color: #78beff;
+}
+
+.dashboard-page .dashboard-upcoming-main strong,
+.dashboard-page .dashboard-upcoming-right > b {
+  color: #f5f9fc;
+}
+
+.dashboard-page .dashboard-upcoming-main span {
+  color: #8298aa;
+}
+
+/* =========================================================
+   FAB
+========================================================= */
+
+.dashboard-page .dashboard-fab {
+  background:
+    linear-gradient(
+      135deg,
+      #19d6c6,
+      #0ca89c
+    );
+
+  color: #042226;
+
+  box-shadow:
+    0 10px 28px rgba(22, 214, 197, 0.20);
+}
+
+.dashboard-page .dashboard-fab:hover {
+  box-shadow:
+    0 14px 36px rgba(22, 214, 197, 0.27);
+}
+
+/* =========================================================
+   DETAIL / OVERVIEW / MORE SHEETS
+========================================================= */
+
+.dashboard-page .dashboard-detail-backdrop,
+.dashboard-page .dashboard-more-sheet-backdrop,
+.dashboard-page .payment-modal-backdrop {
+  background: rgba(1, 9, 16, 0.72);
+  backdrop-filter: blur(7px);
+}
+
+.dashboard-page .dashboard-detail-sheet,
+.dashboard-page .dashboard-more-sheet,
+.dashboard-page .payment-modal {
+  background:
+    linear-gradient(
+      180deg,
+      #0c2438,
+      #081b2c
+    );
+
+  border: 1px solid rgba(148, 181, 204, 0.14);
+
+  box-shadow:
+    0 26px 70px rgba(0, 0, 0, 0.38);
+}
+
+.dashboard-page .dashboard-detail-head,
+.dashboard-page .dashboard-more-sheet-head,
+.dashboard-page .payment-modal-header {
+  border-bottom-color: rgba(148, 181, 204, 0.10);
+}
+
+.dashboard-page .dashboard-detail-head h3,
+.dashboard-page .dashboard-more-sheet-head h3,
+.dashboard-page .payment-modal-header h3,
+.dashboard-page .dashboard-active-list-head h4 {
+  color: #f5f9fc;
+}
+
+.dashboard-page .dashboard-detail-head strong,
+.dashboard-page .dashboard-active-cycle-grid strong {
+  color: #2fe0d0;
+}
+
+.dashboard-page .dashboard-detail-head > button,
+.dashboard-page .dashboard-more-sheet-head > button,
+.dashboard-page .payment-modal-header .photo-viewer-close {
+  background: rgba(255, 255, 255, 0.045);
+  color: #9fb1bf;
+}
+
+.dashboard-page .dashboard-detail-list article,
+.dashboard-page .dashboard-active-customer-list article {
+  border-bottom-color: rgba(148, 181, 204, 0.08);
+}
+
+.dashboard-page .dashboard-detail-list span,
+.dashboard-page .dashboard-detail-list small,
+.dashboard-page .dashboard-active-customer-list span,
+.dashboard-page .dashboard-active-customer-list small,
+.dashboard-page .dashboard-active-list-head span,
+.dashboard-page .dashboard-more-sheet-head p {
+  color: #8298aa;
+}
+
+.dashboard-page .dashboard-detail-list strong,
+.dashboard-page .dashboard-active-customer-list strong,
+.dashboard-page .dashboard-active-customer-right b,
+.dashboard-page .dashboard-detail-list article > b {
+  color: #e5eef4;
+}
+
+/* =========================================================
+   ACTIVE LOANS POPUP
+========================================================= */
+
+.dashboard-page .dashboard-active-cycle-grid > button {
+  border-color: rgba(148, 181, 204, 0.10);
+  background: rgba(255, 255, 255, 0.03);
+  color: #dce7ef;
+}
+
+.dashboard-page .dashboard-active-cycle-grid > button:hover,
+.dashboard-page .dashboard-active-cycle-grid > button.active {
+  border-color: rgba(22, 214, 197, 0.28);
+  background: rgba(22, 214, 197, 0.08);
+}
+
+.dashboard-page .dashboard-active-cycle-grid span,
+.dashboard-page .dashboard-active-cycle-grid small {
+  color: #8298aa;
+}
+
+.dashboard-page .dashboard-active-list-head {
+  border-top-color: rgba(148, 181, 204, 0.08);
+  border-bottom-color: rgba(148, 181, 204, 0.08);
+}
+
+.dashboard-page .dashboard-active-list-head button,
+.dashboard-page .dashboard-active-customer-right button {
+  border-color: rgba(22, 214, 197, 0.22);
+  background: rgba(22, 214, 197, 0.06);
+  color: #39ddce;
+}
+
+/* =========================================================
+   OVERVIEW
+========================================================= */
+
+.dashboard-page .dashboard-overview-grid article {
+  border-color: rgba(148, 181, 204, 0.10);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.dashboard-page .dashboard-overview-grid span {
+  color: #8298aa;
+}
+
+.dashboard-page .dashboard-overview-grid strong {
+  color: #f5f9fc;
+}
+
+.dashboard-page .dashboard-overview-actions button,
+.dashboard-page .dashboard-more-grid button {
+  border-color: rgba(148, 181, 204, 0.10);
+  background: rgba(255, 255, 255, 0.035);
+  color: #77c7ff;
+}
+
+.dashboard-page .dashboard-overview-actions button:hover,
+.dashboard-page .dashboard-more-grid button:hover {
+  border-color: rgba(22, 214, 197, 0.25);
+  background: rgba(22, 214, 197, 0.07);
+  color: #34dfcf;
+}
+
+/* =========================================================
+   PAYMENT MODAL
+========================================================= */
+
+.dashboard-page .payment-tabs {
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.dashboard-page .payment-tabs button {
+  color: #8298aa;
+}
+
+.dashboard-page .payment-tabs button.active {
+  background: rgba(22, 214, 197, 0.10);
+  color: #39dfd0;
+  box-shadow: none;
+}
+
+.dashboard-page .payment-field span {
+  color: #8fa4b5;
+}
+
+.dashboard-page .payment-field input {
+  border-color: rgba(148, 181, 204, 0.12);
+  background: rgba(4, 20, 33, 0.86);
+  color: #f0f6fa;
+}
+
+.dashboard-page .payment-field input:focus {
+  border-color: rgba(22, 214, 197, 0.50);
+  box-shadow:
+    0 0 0 3px rgba(22, 214, 197, 0.09);
+}
+
+.dashboard-page .payment-summary-grid > div {
+  background: rgba(255, 255, 255, 0.035);
+  border-color: rgba(148, 181, 204, 0.09);
+}
+
+.dashboard-page .payment-summary-grid span {
+  color: #8298aa;
+}
+
+.dashboard-page .payment-summary-grid b {
+  color: #f5f9fc;
+}
+
+.dashboard-page .payment-modal .primary.full {
+  background:
+    linear-gradient(
+      180deg,
+      #18cdbc,
+      #0eaa9d
+    );
+
+  color: #041b20;
+}
+
+.dashboard-page .payment-modal .primary.full:hover {
+  background:
+    linear-gradient(
+      180deg,
+      #2fe0d0,
+      #13b7a9
+    );
+}
+
+/* =========================================================
+   TOP MENU
+========================================================= */
+
+.dashboard-page .dashboard-top-menu {
+  background: #0b2235;
+  border-color: rgba(148, 181, 204, 0.12);
+
+  box-shadow:
+    0 18px 42px rgba(0, 0, 0, 0.28);
+}
+
+.dashboard-page .dashboard-top-menu button {
+  color: #b8c7d2;
+}
+
+.dashboard-page .dashboard-top-menu button:hover {
+  background: rgba(22, 214, 197, 0.08);
+  color: #35decf;
+}
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 768px) {
+
+  .dashboard-page {
+    background:
+      linear-gradient(
+        180deg,
+        #071b2d 0%,
+        #061624 100%
+      ) !important;
+  }
+
+  .dashboard-page .dashboard-collection-card {
+    background:
+      linear-gradient(
+        180deg,
+        rgba(13, 39, 61, 0.96),
+        rgba(8, 29, 46, 0.96)
+      );
+
+    border-color: rgba(148, 181, 204, 0.10);
+  }
+
+  .dashboard-page .dashboard-collection-top span,
+  .dashboard-page .dashboard-collection-bottom > span {
+    color: #8298aa;
+  }
+
+  .dashboard-page .dashboard-collection-top strong,
+  .dashboard-page .dashboard-collection-top > b {
+    color: #f5f9fc;
+  }
+
+  .dashboard-page .dashboard-mobile-nav {
+    background: rgba(5, 22, 36, 0.97);
+
+    border-top-color:
+      rgba(148, 181, 204, 0.10);
+
+    box-shadow:
+      0 -8px 26px rgba(0, 0, 0, 0.18);
+  }
+
+  .dashboard-page .dashboard-mobile-nav button {
+    color: #7890a3;
+  }
+
+  .dashboard-page .dashboard-mobile-nav button.active {
+    background: rgba(22, 214, 197, 0.09);
+    color: #39dfd0;
   }
 
 }

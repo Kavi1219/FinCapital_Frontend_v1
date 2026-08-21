@@ -1,62 +1,457 @@
-import { NavLink } from "react-router";
+import { useState } from "react";
+import {
+  NavLink,
+  useLocation,
+} from "react-router";
+
 import "../styles/SharedPages.css";
-export default function Sidebar({ open, onClose }) {
-  const cls = ({ isActive }) => "navlink " + (isActive ? "active" : "");
+
+export default function Sidebar({
+  open,
+  onClose,
+}) {
+  const location =
+    useLocation();
+
+  const [
+    customersOpen,
+    setCustomersOpen,
+  ] = useState(
+    location.pathname.startsWith(
+      "/customers"
+    )
+  );
+
+  const [
+    loansOpen,
+    setLoansOpen,
+  ] = useState(
+    location.pathname.startsWith(
+      "/loans"
+    )
+  );
+
+  const cls = ({
+    isActive,
+  }) =>
+    "navlink " +
+    (isActive
+      ? "active"
+      : "");
+
+  const customersActive =
+    location.pathname.startsWith(
+      "/customers"
+    );
+
+  const loansActive =
+    location.pathname.startsWith(
+      "/loans"
+    );
+
+  function handleNavigate() {
+    onClose();
+  }
+
   return (
     <>
-      <div className={"backdrop " + (open ? "open" : "")} onClick={onClose} />
-      <aside className={"sidebar " + (open ? "open" : "")}>
+
+      <div
+        className={
+          "backdrop " +
+          (open ? "open" : "")
+        }
+        onClick={onClose}
+      />
+
+
+      <aside
+        className={
+          "sidebar " +
+          (open ? "open" : "")
+        }
+      >
+
         <div className="sidebrand">
-          <span className="avatar">S</span>
-          <span>
-            <b>Sangam Fin Capital</b>
-            <small>Main Branch</small>
+
+          <span className="avatar">
+            S
           </span>
+
+          <span>
+
+            <b>
+              Sangam Fin Capital
+            </b>
+
+            <small>
+              Main Branch
+            </small>
+
+          </span>
+
         </div>
+
+
         <nav>
-          <NavLink className={cls} to="/dashboard" onClick={onClose}>
-            Dashboard
+
+          {/* HOME */}
+
+          <NavLink
+            className={cls}
+            to="/dashboard"
+            onClick={
+              handleNavigate
+            }
+          >
+            <span className="sidebar-icon">
+              ⌂
+            </span>
+
+            <span>
+              Home
+            </span>
           </NavLink>
-          <div className="navgroup">Customers</div>
-          <NavLink className={cls} to="/customers/daily" onClick={onClose}>
-            Daily
+
+
+          {/* CUSTOMERS */}
+
+          <button
+            type="button"
+            className={
+              "sidebar-dropdown-title " +
+              (
+                customersActive
+                  ? "active"
+                  : ""
+              )
+            }
+            onClick={() =>
+              setCustomersOpen(
+                (value) =>
+                  !value
+              )
+            }
+          >
+
+            <span className="sidebar-dropdown-left">
+
+              <span className="sidebar-icon">
+                ◎
+              </span>
+
+              <span>
+                Customers
+              </span>
+
+            </span>
+
+            <span
+              className={
+                "sidebar-dropdown-arrow " +
+                (
+                  customersOpen
+                    ? "open"
+                    : ""
+                )
+              }
+            >
+              ⌄
+            </span>
+
+          </button>
+
+
+          {customersOpen && (
+
+            <div className="sidebar-submenu">
+
+              <NavLink
+                className={cls}
+                to="/customers/daily"
+                onClick={
+                  handleNavigate
+                }
+              >
+                <span className="submenu-dot">
+                  •
+                </span>
+
+                Daily
+              </NavLink>
+
+              <NavLink
+                className={cls}
+                to="/customers/weekly"
+                onClick={
+                  handleNavigate
+                }
+              >
+                <span className="submenu-dot">
+                  •
+                </span>
+
+                Weekly
+              </NavLink>
+
+              <NavLink
+                className={cls}
+                to="/customers/monthly"
+                onClick={
+                  handleNavigate
+                }
+              >
+                <span className="submenu-dot">
+                  •
+                </span>
+
+                Monthly
+              </NavLink>
+
+            </div>
+
+          )}
+
+
+          {/* LOANS */}
+
+          <button
+            type="button"
+            className={
+              "sidebar-dropdown-title " +
+              (
+                loansActive
+                  ? "active"
+                  : ""
+              )
+            }
+            onClick={() =>
+              setLoansOpen(
+                (value) =>
+                  !value
+              )
+            }
+          >
+
+            <span className="sidebar-dropdown-left">
+
+              <span className="sidebar-icon">
+                ₹
+              </span>
+
+              <span>
+                Loans
+              </span>
+
+            </span>
+
+            <span
+              className={
+                "sidebar-dropdown-arrow " +
+                (
+                  loansOpen
+                    ? "open"
+                    : ""
+                )
+              }
+            >
+              ⌄
+            </span>
+
+          </button>
+
+
+          {loansOpen && (
+
+            <div className="sidebar-submenu">
+
+              <NavLink
+                className={cls}
+                to="/loans"
+                onClick={
+                  handleNavigate
+                }
+              >
+                <span className="submenu-dot">
+                  •
+                </span>
+
+                All Loans
+              </NavLink>
+
+              <NavLink
+                className={cls}
+                to="/loans/create"
+                onClick={
+                  handleNavigate
+                }
+              >
+                <span className="submenu-dot">
+                  •
+                </span>
+
+                Create Loans
+              </NavLink>
+
+            </div>
+
+          )}
+
+
+          {/* COLLECTION */}
+
+          <NavLink
+            className={cls}
+            to="/collection"
+            onClick={
+              handleNavigate
+            }
+          >
+            <span className="sidebar-icon">
+              ₹
+            </span>
+
+            <span>
+              Collection
+            </span>
           </NavLink>
-          <NavLink className={cls} to="/customers/weekly" onClick={onClose}>
-            Weekly
+
+
+          {/* PAYMENTS */}
+
+          <NavLink
+            className={cls}
+            to="/payments"
+            onClick={
+              handleNavigate
+            }
+          >
+            <span className="sidebar-icon">
+              ⇄
+            </span>
+
+            <span>
+              History
+            </span>
           </NavLink>
-          <NavLink className={cls} to="/customers/monthly" onClick={onClose}>
-            Monthly
+
+
+          {/* EXPENSES */}
+
+          <NavLink
+            className={cls}
+            to="/expenses"
+            onClick={
+              handleNavigate
+            }
+          >
+            <span className="sidebar-icon">
+              −
+            </span>
+
+            <span>
+              Expenses
+            </span>
           </NavLink>
-          <div className="navgroup">Loans</div>
-          <NavLink className={cls} to="/loans" onClick={onClose}>
-            All Loans
+
+
+          {/* REPORTS */}
+
+          <NavLink
+            className={cls}
+            to="/reports"
+            onClick={
+              handleNavigate
+            }
+          >
+            <span className="sidebar-icon">
+              ▦
+            </span>
+
+            <span>
+              Reports
+            </span>
           </NavLink>
-          <NavLink className={cls} to="/loans/create" onClick={onClose}>
-            Create Loans
+
+          {/* OVERVIEW */}
+
+<NavLink
+  className={cls}
+  to="/reports"
+  onClick={
+    handleNavigate
+  }
+>
+  <span className="sidebar-icon">
+    ▦
+  </span>
+
+  <span>
+    Overview
+  </span>
+</NavLink>
+
+
+          {/* AGENTS */}
+
+          <NavLink
+            className={cls}
+            to="/agents"
+            onClick={
+              handleNavigate
+            }
+          >
+            <span className="sidebar-icon">
+              ♙
+            </span>
+
+            <span>
+              Agents
+            </span>
           </NavLink>
-          <NavLink className={cls} to="/collection" onClick={onClose}>
-            Collection
+
+
+          {/* DOCUMENTS */}
+
+          <NavLink
+            className={cls}
+            to="/documents"
+            onClick={
+              handleNavigate
+            }
+          >
+            <span className="sidebar-icon">
+              ▤
+            </span>
+
+            <span>
+              Documents
+            </span>
           </NavLink>
-          <NavLink className={cls} to="/payments" onClick={onClose}>
-            Payments
+
+
+          {/* SETTINGS */}
+
+          <NavLink
+            className={cls}
+            to="/settings"
+            onClick={
+              handleNavigate
+            }
+          >
+            <span className="sidebar-icon">
+              ⚙
+            </span>
+
+            <span>
+              Settings
+            </span>
           </NavLink>
-          <NavLink className={cls} to="/expenses" onClick={onClose}>
-            Expenses
-          </NavLink>
-          <NavLink className={cls} to="/reports" onClick={onClose}>
-            Reports
-          </NavLink>
-          <NavLink className={cls} to="/agents" onClick={onClose}>
-            Agents
-          </NavLink>
-          <NavLink className={cls} to="/documents" onClick={onClose}>
-            Documents
-          </NavLink>
-          <NavLink className={cls} to="/settings" onClick={onClose}>
-            Settings
-          </NavLink>
+
         </nav>
+
       </aside>
+
     </>
   );
 }

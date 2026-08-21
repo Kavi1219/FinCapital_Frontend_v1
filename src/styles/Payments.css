@@ -567,3 +567,535 @@
 
 }
 
+
+/* =========================================================
+   PAYMENTS - DARK FINTECH THEME
+========================================================= */
+.payment-modal,
+.preclose-modal,
+.success-modal,
+.customer-cashflow-card {
+  background: linear-gradient(180deg, rgba(11,33,52,.98), rgba(8,27,44,.98)) !important;
+  border-color: rgba(148,181,204,.13) !important;
+  color: #dce7ef !important;
+  box-shadow: 0 18px 46px rgba(0,0,0,.24) !important;
+}
+
+.payment-modal-backdrop,
+.preclose-modal-backdrop,
+.success-overlay {
+  background: rgba(1,9,16,.72) !important;
+  backdrop-filter: blur(7px);
+}
+
+.payment-modal-header,
+.success-divider {
+  border-color: rgba(148,181,204,.10) !important;
+}
+
+.payment-modal-header h3,
+.payment-summary-grid b,
+.payment-preview b,
+.payment-history-table td,
+.preclose-modal h2,
+.preclose-modal-details strong,
+.success-modal h2,
+.success-detail-row strong,
+.customer-cashflow-card strong {
+  color: #f5f9fc !important;
+}
+
+.payment-modal-header p,
+.payment-summary-grid span,
+.payment-preview span,
+.payment-field > span,
+.preclose-modal-message,
+.preclose-modal-details span,
+.success-message,
+.success-detail-row span,
+.customer-cashflow-card span {
+  color: #8298aa !important;
+}
+
+.payment-tabs,
+.payment-summary-grid > div,
+.payment-preview,
+.preclose-modal-details > div,
+.success-details,
+.customer-cashflow-card {
+  background: rgba(255,255,255,.025) !important;
+  border-color: rgba(148,181,204,.09) !important;
+}
+
+.payment-tabs button {
+  background: transparent !important;
+  border-color: rgba(148,181,204,.08) !important;
+  color: #8298aa !important;
+}
+
+.payment-tabs button.active {
+  background: rgba(22,214,197,.10) !important;
+  border-color: rgba(22,214,197,.22) !important;
+  color: #39dfd0 !important;
+}
+
+.payment-field input {
+  background: rgba(4,20,33,.88) !important;
+  color: #eef5f9 !important;
+  border-color: rgba(148,181,204,.14) !important;
+}
+
+.payment-history-table th {
+  background: rgba(255,255,255,.035) !important;
+  color: #8fa4b5 !important;
+}
+
+.payment-history-table td {
+  border-color: rgba(148,181,204,.08) !important;
+}
+
+.payment-type-badge.due,
+.cash-direction-badge.incoming {
+  background: rgba(39,211,159,.11) !important;
+  color: #45dfae !important;
+}
+
+.payment-type-badge.fine,
+.cash-direction-badge.outgoing {
+  background: rgba(255,102,112,.11) !important;
+  color: #ff7f87 !important;
+}
+
+.payment-type-badge.preclose {
+  background: rgba(255,173,66,.11) !important;
+  color: #ffb84f !important;
+}
+
+.payment-type-badge.loan-given {
+  background: rgba(86,168,255,.10) !important;
+  color: #78beff !important;
+}
+
+.preclose-confirm-button,
+.success-button {
+  background: linear-gradient(180deg,#18cdbc,#0eaa9d) !important;
+  color: #041b20 !important;
+  border-color: #16d6c5 !important;
+}
+/* =========================================================
+   PAYMENT TRANSACTION CLEANUP
+========================================================= */
+
+/* Remove unwanted underline */
+
+.transactions-table td,
+.transaction-type,
+.transaction-incoming,
+.transaction-outgoing {
+  text-decoration: none !important;
+  border-bottom: none !important;
+}
+
+
+/* INCOMING MONEY */
+
+.transaction-incoming {
+  color: #2dd4a8 !important;
+  font-weight: 700;
+}
+
+
+/* OUTGOING / NEGATIVE MONEY */
+
+.transaction-outgoing {
+  color: #ff5f6d !important;
+  font-weight: 700;
+}
+
+
+/* TRANSACTION TYPE BADGES */
+
+.transaction-type {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+
+  width: fit-content !important;
+  min-width: 0 !important;
+  max-width: max-content !important;
+  flex: 0 0 auto !important;
+
+  padding: 5px 10px;
+
+  border-radius: 20px;
+
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+
+  white-space: nowrap;
+  text-decoration: none !important;
+}
+
+
+/* COLLECTION */
+
+.transaction-type.due,
+.transaction-type.collection {
+  background: rgba(45, 212, 168, 0.10);
+  color: #35d9ae;
+}
+
+
+/* FINE */
+
+.transaction-type.fine {
+  background: rgba(255, 173, 66, 0.12);
+  color: #ffb74d;
+}
+
+
+/* PRECLOSE */
+
+.transaction-type.preclose {
+  background: rgba(85, 168, 255, 0.12);
+  color: #70b9ff;
+}
+
+
+/* PRINCIPAL RETURN */
+
+.transaction-type.principal-return {
+  background: rgba(92, 201, 255, 0.12);
+  color: #67cfff;
+}
+
+
+/* NEW CUSTOMER */
+
+.transaction-type.loan-given {
+  background: rgba(255, 95, 109, 0.11);
+  color: #ff7681;
+}
+
+
+/* VIEW BUTTON */
+
+.transaction-view-button {
+  min-height: 30px;
+  padding: 0 11px;
+
+  border: 1px solid rgba(22, 214, 197, 0.22);
+  border-radius: 7px;
+
+  background: rgba(22, 214, 197, 0.06);
+
+  color: #39dfd0;
+
+  font-size: 11px;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.transaction-view-button:hover {
+  background: rgba(22, 214, 197, 0.12);
+  border-color: rgba(22, 214, 197, 0.35);
+}
+
+
+/* NO ACTION */
+
+.transaction-no-action {
+  color: #6f8596;
+}
+/* =========================================================
+   TRANSACTION FILTER BUTTONS
+========================================================= */
+
+.transaction-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  margin-top: 14px;
+  margin-bottom: 4px;
+}
+
+.transaction-filters button {
+  min-height: 34px;
+
+  padding: 0 13px;
+
+  border: 1px solid rgba(148, 181, 204, 0.14);
+  border-radius: 8px;
+
+  background: rgba(255, 255, 255, 0.035);
+
+  color: #a9bccb;
+
+  font-size: 11px;
+  font-weight: 600;
+
+  font-family: inherit;
+
+  cursor: pointer;
+
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease,
+    transform 0.18s ease;
+}
+
+.transaction-filters button:hover {
+  background: rgba(22, 214, 197, 0.07);
+
+  border-color: rgba(22, 214, 197, 0.20);
+
+  color: #39dfd0;
+
+  transform: translateY(-1px);
+}
+
+.transaction-filters button.active {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(22, 214, 197, 0.16),
+      rgba(22, 214, 197, 0.08)
+    );
+
+  border-color: rgba(22, 214, 197, 0.34);
+
+  color: #41e5d6;
+
+  box-shadow:
+    0 4px 14px rgba(22, 214, 197, 0.08);
+} 
+.transaction-customer {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.transaction-customer strong {
+  color: #f5f9fc;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.transaction-customer small {
+  color: #8298aa;
+  font-size: 9px;
+  font-weight: 500;
+}
+
+
+/* =========================================================
+   FINAL TRANSACTION BADGE FIX
+   Keep this block at the very bottom of Payments.css
+========================================================= */
+
+.transactions-table td {
+  vertical-align: middle;
+}
+
+/* Prevent every transaction badge from stretching across the column */
+.transactions-table .transaction-type {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: max-content !important;
+
+  padding: 5px 10px !important;
+
+  border-radius: 999px !important;
+
+  white-space: nowrap;
+
+  text-decoration: none !important;
+  box-sizing: border-box;
+}
+
+/* Collection / incoming */
+.transactions-table .transaction-type.due,
+.transactions-table .transaction-type.collection {
+  background: #083f3e !important;
+  border: 1px solid #0b5b57 !important;
+  color: #35e2c6 !important;
+}
+
+/* Fine */
+.transactions-table .transaction-type.fine {
+  background: #402d12 !important;
+  border: 1px solid #6d4a18 !important;
+  color: #ffba55 !important;
+}
+
+/* Preclose */
+.transactions-table .transaction-type.preclose {
+  background: #102f4a !important;
+  border: 1px solid #1e5278 !important;
+  color: #75c1ff !important;
+}
+
+/* Principal return */
+.transactions-table .transaction-type.principal-return {
+  background: #10364a !important;
+  border: 1px solid #1d5972 !important;
+  color: #6fd8ff !important;
+}
+
+/* Expense = outgoing, clearly red */
+.transactions-table .transaction-type.expense {
+  background: #e67f8c !important;
+  border: 1px solid #8b2f3b !important;
+  color: #b4000f !important;
+
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: max-content !important;
+
+  box-shadow: none !important;
+}
+
+/* Loan Given / New Customer = outgoing, same red family */
+.transactions-table .transaction-type.loan-given {
+  background: #7d434b !important;
+  border: 1px solid #673f44 !important;
+  color: #ff6b78 !important;
+
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: max-content !important;
+
+  box-shadow: none !important;
+}
+
+/* Amount direction colors */
+.transactions-table .transaction-incoming {
+  color: #2ee2b3 !important;
+  font-weight: 700;
+  text-decoration: none !important;
+}
+
+.transactions-table .transaction-outgoing {
+  color: #f16874 !important;
+  font-weight: 700;
+  text-decoration: none !important;
+}
+
+/* =========================================================
+   TRANSACTION DATE FILTER
+========================================================= */
+
+.transactions-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+
+  gap: 20px;
+}
+
+.transaction-date-filter {
+  display: flex;
+  align-items: flex-end;
+
+  gap: 8px;
+
+  flex-wrap: wrap;
+}
+
+.transaction-date-filter label {
+  display: flex;
+  flex-direction: column;
+
+  gap: 5px;
+}
+
+.transaction-date-filter label span {
+  color: #8298aa;
+
+  font-size: 9px;
+  font-weight: 600;
+
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.transaction-date-filter input {
+  height: 36px;
+
+  padding: 0 10px;
+
+  border: 1px solid rgba(148, 181, 204, 0.14);
+  border-radius: 8px;
+
+  outline: none;
+
+  background: rgba(4, 20, 33, 0.86);
+
+  color: #dce7ef;
+
+  font-family: inherit;
+  font-size: 11px;
+
+  color-scheme: dark;
+}
+
+.transaction-date-filter input:focus {
+  border-color: rgba(22, 214, 197, 0.45);
+
+  box-shadow:
+    0 0 0 3px
+    rgba(22, 214, 197, 0.07);
+}
+
+.transaction-date-clear {
+  height: 36px;
+
+  padding: 0 12px;
+
+  border: 1px solid rgba(255, 102, 112, 0.18);
+  border-radius: 8px;
+
+  background: rgba(255, 102, 112, 0.07);
+
+  color: #ff7a83;
+
+  font-size: 10px;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.transaction-date-clear:hover {
+  background: rgba(255, 102, 112, 0.12);
+}
+
+
+/* MOBILE */
+
+@media (max-width: 768px) {
+
+  .transactions-header {
+    flex-direction: column;
+  }
+
+  .transaction-date-filter {
+    width: 100%;
+  }
+
+  .transaction-date-filter label {
+    flex: 1;
+  }
+
+  .transaction-date-filter input {
+    width: 100%;
+  }
+
+}

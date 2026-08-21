@@ -549,3 +549,15 @@ button:disabled {
     overflow-y: auto;
   }
 }
+
+/* =========================================================
+   FIN CAPITAL - PROFESSIONAL DARK FINTECH OVERRIDES
+========================================================= */
+:root{--fc-primary:#16d6c5;--fc-primary-dark:#0fb6a8;--fc-navy:#f5f9fc;--fc-ink:#dce7ef;--fc-muted:#8298aa;--fc-bg:#061624;--fc-card:#0b2134;--fc-line:rgba(148,181,204,.13);--fc-red:#ff6670;--fc-green:#27d39f;--fc-shadow:0 12px 32px rgba(0,0,0,.18);--fc-shadow-lg:0 28px 70px rgba(0,0,0,.40)}
+body{background:radial-gradient(circle at 90% -10%,rgba(22,214,197,.06),transparent 26rem),#061624!important;color:#dce7ef}
+.header{background:rgba(6,24,39,.96)!important;border-color:rgba(148,181,204,.1)!important}
+.panel,.card,.cash article{background:linear-gradient(180deg,#0b2134,#081b2c)!important;border-color:var(--fc-line)!important;color:#dce7ef}
+.primary{background:linear-gradient(180deg,#18cdbc,#0eaa9d)!important;color:#041b20!important}
+.secondary-button{background:rgba(255,255,255,.035)!important;border-color:rgba(148,181,204,.14)!important;color:#8fcfff!important}
+.danger-button{background:rgba(255,102,112,.08)!important;border-color:rgba(255,102,112,.2)!important;color:#ff7f87!important}
+.fc-dialog{background:linear-gradient(180deg,#0c2438,#081b2c)!important;border-color:rgba(148,181,204,.14)!important;color:#dce7ef!important}

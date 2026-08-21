@@ -155,3 +155,58 @@
 }
 
 
+
+/* =========================================================
+   ADD LOAN - DARK FINTECH THEME
+========================================================= */
+.loan-summary-card,
+.loan-success-modal {
+  background: linear-gradient(180deg, rgba(11,33,52,.98), rgba(8,27,44,.98)) !important;
+  border-color: rgba(148,181,204,.13) !important;
+  color: #dce7ef !important;
+  box-shadow: 0 16px 40px rgba(0,0,0,.20) !important;
+}
+
+.loan-summary-title,
+.loan-summary-item strong,
+.loan-success-modal h2,
+.loan-success-row strong {
+  color: #f5f9fc !important;
+}
+
+.loan-summary-item span,
+.loan-success-message,
+.loan-success-row span {
+  color: #8298aa !important;
+}
+
+.loan-summary-item,
+.loan-success-details {
+  background: rgba(255,255,255,.025) !important;
+  border-color: rgba(148,181,204,.09) !important;
+}
+
+.loan-summary-item .loan-summary-highlight {
+  color: #39dfd0 !important;
+}
+
+.loan-success-overlay {
+  background: rgba(1,9,16,.72) !important;
+  backdrop-filter: blur(7px);
+}
+
+.loan-success-icon-wrap,
+.loan-success-icon {
+  background: rgba(39,211,159,.11) !important;
+  color: #45dfae !important;
+}
+
+.loan-success-divider {
+  border-color: rgba(148,181,204,.09) !important;
+}
+
+.loan-success-button {
+  background: linear-gradient(180deg,#18cdbc,#0eaa9d) !important;
+  color: #041b20 !important;
+  border-color: #16d6c5 !important;
+}

@@ -754,3 +754,110 @@
 }
 
 
+
+/* =========================================================
+   ADD CUSTOMER - DARK FINTECH THEME
+========================================================= */
+.add-customer-panel,
+.document-entry-card,
+.app-modal {
+  background: linear-gradient(180deg, rgba(11,33,52,.98), rgba(8,27,44,.98)) !important;
+  border-color: rgba(148,181,204,.13) !important;
+  color: #dce7ef !important;
+  box-shadow: 0 12px 32px rgba(0,0,0,.16) !important;
+}
+
+.add-customer-header h1,
+.form-section-title,
+.document-entry-header strong,
+.multi-document-heading h3,
+.upload-placeholder strong,
+.customer-success-details strong,
+.app-modal h2 {
+  color: #f5f9fc !important;
+}
+
+.add-customer-header p,
+.form-field label,
+.multi-document-heading p,
+.upload-placeholder small,
+.customer-success-details span,
+.app-modal > p {
+  color: #8298aa !important;
+}
+
+.form-field input,
+.form-field textarea,
+.form-field select {
+  background: rgba(4,20,33,.88) !important;
+  color: #eef5f9 !important;
+  border-color: rgba(148,181,204,.14) !important;
+}
+
+.form-field input[readonly] {
+  background: rgba(255,255,255,.025) !important;
+  color: #9fb1bf !important;
+}
+
+.form-field input:focus,
+.form-field textarea:focus,
+.form-field select:focus {
+  border-color: rgba(22,214,197,.52) !important;
+  box-shadow: 0 0 0 3px rgba(22,214,197,.09) !important;
+}
+
+.add-customer-panel .choices,
+.customer-steps {
+  background: rgba(255,255,255,.025) !important;
+  border-color: rgba(148,181,204,.08) !important;
+}
+
+.add-customer-panel .choices button,
+.customer-step {
+  color: #8fa4b5 !important;
+}
+
+.add-customer-panel .choices button.active,
+.customer-step.active {
+  background: rgba(22,214,197,.10) !important;
+  color: #39dfd0 !important;
+  border-color: rgba(22,214,197,.20) !important;
+}
+
+.single-photo-upload,
+.form-field > label.photo-upload-box,
+.document-upload-button,
+.upload-source-button {
+  background: rgba(255,255,255,.025) !important;
+  border-color: rgba(148,181,204,.13) !important;
+  color: #b7c7d2 !important;
+}
+
+.single-photo-upload:hover,
+.form-field > label.photo-upload-box:hover,
+.document-upload-button:hover,
+.upload-source-button:hover {
+  background: rgba(22,214,197,.06) !important;
+  border-color: rgba(22,214,197,.24) !important;
+}
+
+.save-customer-button,
+.add-document-button,
+.app-modal-full-button {
+  background: linear-gradient(180deg,#18cdbc,#0eaa9d) !important;
+  color: #041b20 !important;
+  border-color: #16d6c5 !important;
+}
+
+.cancel-button,
+.app-modal-cancel,
+.remove-document-button {
+  background: rgba(255,255,255,.035) !important;
+  color: #9fc3db !important;
+  border-color: rgba(148,181,204,.14) !important;
+}
+
+.app-modal-backdrop {
+  background: rgba(1,9,16,.72) !important;
+  backdrop-filter: blur(7px);
+}
